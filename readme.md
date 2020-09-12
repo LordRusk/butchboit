@@ -5,16 +5,23 @@ This is nothing more then a project for me to get good at golang.
 It has 3 sections of commands,
 
 Basic:
+
 	Help - Show the help menu
+	
 	Prefix - Set the prefix
 
 ProfilingSystem: - A system of profiles I wrote for my friends and I.
+	
 	Profile - Show a profile from `!profiles`
+	
 	Profiles - Shows a list of all possible profiles
 
 4chan: - 4chan related commands
+	
 	Post - Get a random 4chan post
+	
 	Boards - Get a random 4chan post from specified board
+	
 	Scope - Scope out a certain 4chan post
 
 #FQA - Frequently Questioned Answers
