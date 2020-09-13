@@ -24,7 +24,7 @@ ProfilingSystem: - A system of profiles I wrote for my friends and I.
 	
 	Scope - Scope out a certain 4chan post
 
-#FQA - Frequently Questioned Answers
+# FQA - Frequently Questioned Answers
 
 + Why does this use [arikawa](https://github.com/diamondburned/arikawa) and not [discordgo](https://github.com/bwmarrin/discordgo) or [disgord](https://github.com/andersfylling/disgord)?
 
