@@ -153,6 +153,14 @@ var (
 			tags: []string{"GBV", "MIB"},
 			info: "**General Info:**\n- Jack joined the bool the bool XXXX-XX-XX.\n- Jack was one of 4 boolers to be in the Great Bool.\n- Jack has PTSD because of the great bool, and has since refused to narrate the story, which is dumb and stupid and gay.\n- Jack heavily simped for *Sub Bitch* during his time in the bool.\n- Jack left the bool because *Prophet* pranked Jack by telling him *Sub Bitch* had a dick.",
 		},
+		profile {
+			name: "Jayden Barilo",
+			nickname: "Crit",
+			color: "#AD03FC",
+			id: 542160535177658401,
+			triggers: []string{"Jayden", "jayden", "Crit", "crit", "CritMass", "critmass" },
+			info: "**General Info:**\n- Jayden joined the bool September 13, 2020.\n- Jayden was in the bool mobile when the bool got its first ticket.\n- He can out drink anyone in the bool",
+		},
 	}
 )
 
