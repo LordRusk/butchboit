@@ -226,30 +226,46 @@ func (botStruct *Bot) Board(m *gateway.MessageCreateEvent, boardName string) (*d
 	return embed, nil
 }
 
-func (botStruct *Bot) Scope(m *gateway.MessageCreateEvent, boardName string, postNo int) (*discord.Embed, error) {
-	/* godesu stuff */
-	board := gochan.Board(boardName)
-
-	err, thread := board.GetThread(postNo)
-	if err != nil {
-		return nil, err
-	}
-
-	var postNum int
-	for num, post := range thread.Posts {
-		if post.No == postNo {
-			postNum = num
-		}
-	}
-
-	/*** BUILD THE EMBED ***/
-	embed, err := post2Embed(thread, postNum)
-	if err != nil {
-		return nil, err
-	}
-
-	return embed, nil
-}
+//func (botStruct *Bot) Scope(m *gateway.MessageCreateEvent, boardName string, postNo int) (*discord.Embed, error) {
+/*	/* godesu stuff /
+ *	board := gochan.Board(boardName)
+ *
+ *	err, catalog := board.GetCatalog()
+ *	if err != nil {
+ *		return nil, err
+ *	}
+ *
+ *	threadNoArr := []int{}
+ *	for _, page := range catalog.Pages {
+ *		for _, thread := range page.Threads {
+ *			threadNoArr = append(threadNoArr, thread.No)
+ *		}
+ *	}
+ *
+ *	var postNum int
+ *	var finalThread godesu.Thread
+ *	for _, threadNo := range threadNoArr {
+ *		err, thread := board.GetThread(threadNo)
+ *		if err != nil {
+ *			return nil, err
+ *		}
+ *		for num, post := range thread.Posts {
+ *			if post.No == postNo {
+ *				postNum = num
+ *				finalThread = thread
+ *			}
+ *		}
+ *	}
+ *
+ *	/*** BUILD THE EMBED /
+ *	embed, err := post2Embed(finalThread, postNum)
+ *	if err != nil {
+ *		return nil, err
+ *	}
+ *
+ *	return embed, nil
+ *}
+ */
 
 func (botStruct *Bot) Boards(*gateway.MessageCreateEvent) (*discord.Embed, error) {
 	/* godesu stuff */
