@@ -1,16 +1,16 @@
 package main
 
 import (
-	"time"
 	"errors"
-	"strings"
-	"strconv"
 	"math/rand"
+	"strconv"
+	"strings"
+	"time"
 
-	"jaytaylor.com/html2text"
-	"github.com/lordrusk/godesu"
 	"github.com/diamondburned/arikawa/discord"
 	"github.com/diamondburned/arikawa/gateway"
+	"github.com/lordrusk/godesu"
+	"jaytaylor.com/html2text"
 )
 
 type IntRange struct {
@@ -19,19 +19,19 @@ type IntRange struct {
 
 var (
 	/* godesu stuff */
-	gochan = godesu.New()
-	_, boards = gochan.GetBoards()
-	r4color = "#006500"
-	boardsColor = "#12d7a9"
-	scheme = "https"
-	imgBaseURL = "i.4cdn.org"
+	gochan          = godesu.New()
+	_, boards       = gochan.GetBoards()
+	r4color         = "#006500"
+	boardsColor     = "#12d7a9"
+	scheme          = "https"
+	imgBaseURL      = "i.4cdn.org"
 	defualt4chanURL = "boards.4chan.org"
-	baseImageURL = scheme+"://"+imgBaseURL
+	baseImageURL    = scheme + "://" + imgBaseURL
 )
 
 /* misc functions */
-func (ir *IntRange) NextRandom(r* rand.Rand) int {
-    return r.Intn(ir.max - ir.min +1) + ir.min
+func (ir *IntRange) NextRandom(r *rand.Rand) int {
+	return r.Intn(ir.max-ir.min+1) + ir.min
 }
 
 func post2Embed(thread godesu.Thread, postNum int) (*discord.Embed, error) {
@@ -98,27 +98,26 @@ func post2Embed(thread godesu.Thread, postNum int) (*discord.Embed, error) {
 	}
 
 	/* get the image */
-	image := discord.EmbedImage {
-		URL:	string(baseImageURL+"/"+thread.Board+"/"+strconv.FormatInt(post.Tim, 10)+post.Ext),
+	image := discord.EmbedImage{
+		URL: string(baseImageURL + "/" + thread.Board + "/" + strconv.FormatInt(post.Tim, 10) + post.Ext),
 	}
 
 	/* get the thread URL */
-	fields := []discord.EmbedField {
-		discord.EmbedField {
-			Name:	"Thread URL",
-			Value:	string(scheme+"://"+defualt4chanURL+"/"+thread.Board+"/thread/"+strconv.FormatInt(int64(posts[0].No), 10)),
-			Inline:	true,
+	fields := []discord.EmbedField{
+		discord.EmbedField{
+			Name:   "Thread URL",
+			Value:  string(scheme + "://" + defualt4chanURL + "/" + thread.Board + "/thread/" + strconv.FormatInt(int64(posts[0].No), 10)),
+			Inline: true,
 		},
 	}
 
 	/* make it into a discord.Embed */
-	embed := discord.Embed {
-		Title:		title.String(),
-		Description:	description,
-		Color:		discord.Color(colorHex),
-		Image:		&image,
-		Fields:		fields,
-
+	embed := discord.Embed{
+		Title:       title.String(),
+		Description: description,
+		Color:       discord.Color(colorHex),
+		Image:       &image,
+		Fields:      fields,
 	}
 
 	return &embed, nil
@@ -135,7 +134,7 @@ func (botStruct *Bot) Post(*gateway.MessageCreateEvent) (*discord.Embed, error) 
 		boardMap[num] = board.Board
 	}
 
-	irb := IntRange{0, len(boardMap)-1}
+	irb := IntRange{0, len(boardMap) - 1}
 	boardName := boardMap[irb.NextRandom(r)]
 
 	board := gochan.Board(boardName)
@@ -152,7 +151,7 @@ func (botStruct *Bot) Post(*gateway.MessageCreateEvent) (*discord.Embed, error) 
 		}
 	}
 
-	irt := IntRange{0, len(threadMap)-1}
+	irt := IntRange{0, len(threadMap) - 1}
 	err, thread := board.GetThread(threadMap[irt.NextRandom(r)])
 	if err != nil {
 		return nil, err
@@ -161,7 +160,7 @@ func (botStruct *Bot) Post(*gateway.MessageCreateEvent) (*discord.Embed, error) 
 	/* get a random post */
 	posts := thread.Posts
 
-	irp := IntRange{0, len(posts)-1}
+	irp := IntRange{0, len(posts) - 1}
 	postNum := irp.NextRandom(r)
 
 	/*** BUILD THE EMBED ***/
@@ -205,7 +204,7 @@ func (botStruct *Bot) Board(m *gateway.MessageCreateEvent, boardName string) (*d
 		}
 	}
 
-	irt := IntRange{0, len(threadMap)-1}
+	irt := IntRange{0, len(threadMap) - 1}
 	err, thread := board.GetThread(threadMap[irt.NextRandom(r)])
 	if err != nil {
 		return nil, err
@@ -214,7 +213,7 @@ func (botStruct *Bot) Board(m *gateway.MessageCreateEvent, boardName string) (*d
 	/* get a random post */
 	posts := thread.Posts
 
-	irp := IntRange{0, len(posts)-1}
+	irp := IntRange{0, len(posts) - 1}
 	postNum := irp.NextRandom(r)
 
 	/*** BUILD THE EMBED ***/
@@ -285,10 +284,10 @@ func (botStruct *Bot) Boards(*gateway.MessageCreateEvent) (*discord.Embed, error
 		return nil, err
 	}
 
-	embed := discord.Embed {
-		Title:		"Possible Boards",
-		Description:	description.String(),
-		Color:		discord.Color(colorHex),
+	embed := discord.Embed{
+		Title:       "Possible Boards",
+		Description: description.String(),
+		Color:       discord.Color(colorHex),
 	}
 
 	return &embed, nil
