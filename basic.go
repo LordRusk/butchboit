@@ -15,9 +15,10 @@ type arg struct {
 }
 
 type cmdInfo struct {
-	cmd  string
-	args []arg
-	desc string
+	cmd   string
+	args  []arg
+	desc  string
+	state int
 }
 
 type cmdGroup struct {
@@ -30,9 +31,15 @@ var (
 	HelpDivider = "------------\n"
 	helpColor   = "#fafafa"
 
+	/* A commands state can be one of three values:
+	 * 0 - Working order
+	 * 1 - Work in progress
+	 * 2 - Does not work
+	 */
 	helpCmdInfo = cmdInfo{
-		cmd:  "help",
-		desc: "Show's the help page",
+		cmd:   "help",
+		desc:  "Show's the help page",
+		state: 1,
 	}
 
 	prefixCmdInfo = cmdInfo{
@@ -64,9 +71,10 @@ var (
 	}
 
 	scopeCmdInfo = cmdInfo{
-		cmd:  "scope",
-		args: []arg{arg{name: "4chan Board", isOptional: false}, arg{name: "4chan Post No.", isOptional: false}},
-		desc: "Scope out a certain post",
+		cmd:   "scope",
+		args:  []arg{arg{name: "4chan Board", isOptional: false}, arg{name: "4chan Post No.", isOptional: false}},
+		desc:  "Scope out a certain 4chan post.",
+		state: 2,
 	}
 
 	boardsCmdInfo = cmdInfo{
@@ -98,6 +106,13 @@ var (
 )
 
 /* Bot commands */
+func (botStruct *Bot) Prefix(m *gateway.MessageCreateEvent, newPrefix string) (string, error) {
+	Prefix = newPrefix
+	botStruct.Ctx.HasPrefix = bot.NewPrefix(Prefix)
+
+	return "`" + Prefix + "` is the new prefix!", nil
+}
+
 func (botStruct *Bot) Help(*gateway.MessageCreateEvent) (*discord.Embed, error) {
 	/* generate the help command */
 	var helpMsg strings.Builder
@@ -115,6 +130,11 @@ func (botStruct *Bot) Help(*gateway.MessageCreateEvent) (*discord.Embed, error) 
 		helpMsg.WriteString(cmdGroup.name)
 		helpMsg.WriteString(" Commands:***\n")
 		for _, cmdInfo := range cmdGroup.cmdArr {
+			if cmdInfo.state == 1 {
+				helpMsg.WriteString("__[ Work In Progress ]__ ")
+			} else if cmdInfo.state == 2 {
+				helpMsg.WriteString("~~")
+			}
 			helpMsg.WriteString("**")
 			helpMsg.WriteString(cmdInfo.cmd)
 			helpMsg.WriteString("**")
@@ -128,7 +148,11 @@ func (botStruct *Bot) Help(*gateway.MessageCreateEvent) (*discord.Embed, error) 
 			}
 			helpMsg.WriteString(" -- *")
 			helpMsg.WriteString(cmdInfo.desc)
-			helpMsg.WriteString("*\n")
+			helpMsg.WriteString("*")
+			if cmdInfo.state == 2 {
+				helpMsg.WriteString("~~")
+			}
+			helpMsg.WriteString("\n")
 		}
 		helpMsg.WriteString(HelpDivider)
 	}
@@ -147,11 +171,4 @@ func (botStruct *Bot) Help(*gateway.MessageCreateEvent) (*discord.Embed, error) 
 	}
 
 	return &embed, nil
-}
-
-func (botStruct *Bot) Prefix(m *gateway.MessageCreateEvent, newPrefix string) (string, error) {
-	Prefix = newPrefix
-	botStruct.Ctx.HasPrefix = bot.NewPrefix(Prefix)
-
-	return "`" + Prefix + "` is the new prefix!", nil
 }

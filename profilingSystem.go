@@ -159,15 +159,7 @@ var (
 			color:    "#AD03FC",
 			id:       542160535177658401,
 			triggers: []string{"Jayden", "jayden", "Crit", "crit", "CritMass", "critmass"},
-			info:     "**General Info:**\n- Jayden joined the bool September 13, 2020.\n- Jayden was in the bool mobile when the bool got its first ticket.\n- He can out drink anyone in the bool",
-		},
-		profile {
-			name: "Jayden Barilo",
-			nickname: "Crit",
-			color: "#AD03FC",
-			id: 542160535177658401,
-			triggers: []string{"Jayden", "jayden", "Crit", "crit", "CritMass", "critmass" },
-			info: "**General Info:**\n- Jayden joined the bool September 13, 2020.\n- Jayden was in the bool mobile when the bool got its first ticket.\n- He can out drink anyone in the bool",
+			info:     "**General Info:**\n- Jayden joined the bool September 13, 2020.\n- Jayden was in the bool mobile when the bool got its first ticket.\n- He can out drink anyone in the bool.\n- Parker and Jayden are in a long-term clandestine relationship.",
 		},
 	}
 )
