@@ -28,8 +28,8 @@ ProfilingSystem: - A system of profiles I wrote for my friends and I.
 
 + Why does this use [arikawa](https://github.com/diamondburned/arikawa) and not [discordgo](https://github.com/bwmarrin/discordgo) or [disgord](https://github.com/andersfylling/disgord)?
 
-	 Because arikawa is a lot simpler, more elegant, and just generally a better structured api.
+	• Because arikawa is a lot simpler, more elegant, and just generally a better structured api.
 
 + Why do you use [your fork of godesu](https://github.com/lordrusk/godesu) instead of the original [godesu](https://github.com/mtarnawa/godesu)?
 
-	 Because there are 2 Problems that needed to be fixed, I fixed them on my fork and have a pull request open.
+	• There are a few problems that need to be fixed, and some improvements that I'm planning on implementing into my fork. At some point it will become it's own project, seperate from the original. But until I have time to develope my own, I'll just use this simple fork.
