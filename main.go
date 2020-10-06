@@ -13,8 +13,7 @@ type Bot struct {
 }
 
 var (
-	/* token   = os.Getenv("BOT_TOKEN") */
-	token   = "NzQwNzM4MzczMjE1NDUzMTg2.XytYXg.H1raTZB6njsD93-4o7fDekP0KZE"
+	token   = os.Getenv("BOT_TOKEN")
 	Prefix  = "!"
 	BotName = "ButchBot"
 )
