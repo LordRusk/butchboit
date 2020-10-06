@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	//"os"
+	"os"
 
 	"github.com/diamondburned/arikawa/bot"
 )
