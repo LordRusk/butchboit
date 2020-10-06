@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"os"
+	//"os"
 
 	"github.com/diamondburned/arikawa/bot"
 )
@@ -13,7 +13,8 @@ type Bot struct {
 }
 
 var (
-	token   = os.Getenv("BOT_TOKEN")
+	/* token   = os.Getenv("BOT_TOKEN") */
+	token   = "NzQwNzM4MzczMjE1NDUzMTg2.XytYXg.H1raTZB6njsD93-4o7fDekP0KZE"
 	Prefix  = "!"
 	BotName = "ButchBot"
 )

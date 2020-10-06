@@ -36,70 +36,96 @@ var (
 	 * 1 - Work in progress
 	 * 2 - Does not work
 	 */
-	helpCmdInfo = cmdInfo{
-		cmd:   "help",
-		desc:  "Show's the help page",
-		state: 1,
-	}
-
-	prefixCmdInfo = cmdInfo{
-		cmd:  "prefix",
-		args: []arg{arg{name: "New Prefix", isOptional: false}},
-		desc: "Set a new prefix",
-	}
-
-	profileCmdInfo = cmdInfo{
-		cmd:  "profile",
-		args: []arg{arg{name: "User Profile", isOptional: true}},
-		desc: "Show a profile from the list of `!profiles`",
-	}
-
-	profilesCmdInfo = cmdInfo{
-		cmd:  "profiles",
-		desc: "Get a list of profiles",
-	}
-
-	postCmdInfo = cmdInfo{
-		cmd:  "post",
-		desc: "Get a random 4chan post",
-	}
-
-	boardCmdInfo = cmdInfo{
-		cmd:  "board",
-		args: []arg{arg{name: "A 4chan board", isOptional: false}},
-		desc: "Get a random 4chan post from a specified board.",
-	}
-
-	scopeCmdInfo = cmdInfo{
-		cmd:   "scope",
-		args:  []arg{arg{name: "4chan Board", isOptional: false}, arg{name: "4chan Post No.", isOptional: false}},
-		desc:  "Scope out a certain 4chan post.",
-		state: 2,
-	}
-
-	boardsCmdInfo = cmdInfo{
-		cmd:  "boards",
-		desc: "Get a list of 4chan boards",
-	}
 
 	/* command groups */
 	basicCmdGroup = cmdGroup{
-		name:   "Basic",
-		cmdArr: []cmdInfo{helpCmdInfo, prefixCmdInfo},
+		name: "Basic",
+		cmdArr: []cmdInfo{
+			cmdInfo{
+				cmd:  "help",
+				desc: "Show's the help page",
+			},
+			cmdInfo{
+				cmd:  "prefix",
+				args: []arg{arg{name: "New Prefix", isOptional: false}},
+				desc: "Set a new prefix",
+			},
+		},
+	}
+
+	rsvpCmdGroup = cmdGroup{
+		name: "RSVP",
+		cmdArr: []cmdInfo{
+			cmdInfo{
+				cmd:  "newBool",
+				args: []arg{arg{name: "Bool Name", isOptional: false}, arg{name: "Bool Time", isOptional: false}, arg{name: "Bool Date", isOptional: false}, arg{name: "Bool Description (in quotes)", isOptional: false}},
+				desc: "Create a new bool event",
+			},
+			cmdInfo{
+				cmd:  "removeBool",
+				args: []arg{arg{name: "Selected Bool", isOptional: false}},
+				desc: "Remove a bool event",
+			},
+			cmdInfo{
+				cmd:  "boolInfo",
+				args: []arg{arg{name: "Selected Bool", isOptional: false}},
+				desc: "Show info for a bool event.",
+			},
+			cmdInfo{
+				cmd:  "rsvp",
+				args: []arg{arg{name: "Selected Bool", isOptional: false}},
+				desc: "rsvp for a bool event.",
+			},
+			cmdInfo{
+				cmd:  "bools",
+				desc: "Shows currently active bool events.",
+			},
+		},
 	}
 
 	profilingSystemCmdGroup = cmdGroup{
-		name:   "Profiling System",
-		cmdArr: []cmdInfo{profileCmdInfo, profilesCmdInfo},
+		name: "Profiling System",
+		cmdArr: []cmdInfo{
+			cmdInfo{
+				cmd:  "profile",
+				args: []arg{arg{name: "User Profile", isOptional: true}},
+				desc: "Show a profile from the list of `!profiles`",
+			},
+			cmdInfo{
+				cmd:  "profiles",
+				desc: "Get a list of profiles",
+			},
+		},
 	}
 
 	chanCmdGroup = cmdGroup{
-		name:   "4chan",
-		cmdArr: []cmdInfo{postCmdInfo, boardCmdInfo, scopeCmdInfo, boardsCmdInfo},
+		name: "4chan",
+		cmdArr: []cmdInfo{
+			cmdInfo{
+				cmd:  "post",
+				desc: "Get a random 4chan post",
+			},
+			cmdInfo{
+				cmd:  "board",
+				args: []arg{arg{name: "A 4chan board", isOptional: false}},
+				desc: "Get a random 4chan post from a specified board.",
+			},
+			cmdInfo{
+				cmd:   "scope",
+				args:  []arg{arg{name: "4chan Board", isOptional: false}, arg{name: "4chan Post No.", isOptional: false}},
+				desc:  "Scope out a certain 4chan post.",
+				state: 2,
+			},
+			cmdInfo{
+				cmd:  "boards",
+				desc: "Get a list of 4chan boards",
+			},
+		},
 	}
 
 	cmdGroupMap = map[string]cmdGroup{
 		"basic":     basicCmdGroup,
+		"rsvp":      rsvpCmdGroup,
 		"profiling": profilingSystemCmdGroup,
 		"4chan":     chanCmdGroup,
 	}
