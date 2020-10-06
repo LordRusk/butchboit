@@ -10,6 +10,18 @@ Basic:
 
 	Prefix - Set the prefix
 
+RSVP:
+
+	NewBool - Create a new bool event
+
+	RemoveBool - Remove a bool event
+
+	BoolInfo - Show info for a bool event
+
+	Rsvp - RSVP for a bool event
+
+	Bools - show currently active bool events
+
 ProfilingSystem: - A system of profiles I wrote for my friends and I.
 
 	Profile - Show a profile from `!profiles`
