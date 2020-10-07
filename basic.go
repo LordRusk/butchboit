@@ -139,6 +139,10 @@ func (botStruct *Bot) Prefix(m *gateway.MessageCreateEvent, newPrefix string) (s
 	return "`" + Prefix + "` is the new prefix!", nil
 }
 
+func (botStruct *Bot) Russell(*gateway.MessageCreateEvent) (string, error) {
+	return "Boy am I hard!", nil
+}
+
 func (botStruct *Bot) Help(*gateway.MessageCreateEvent) (*discord.Embed, error) {
 	/* generate the help command */
 	var helpMsg strings.Builder
