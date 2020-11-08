@@ -79,8 +79,8 @@ var (
 		},
 	}
 
-	chanCmdGroup = boolbox.CmdGroup{
-		Name: "4chan",
+	fourCmdGroup = boolbox.CmdGroup{
+		Name: "Four",
 		CmdArr: []boolbox.Cmd{
 			boolbox.Cmd{
 				Cmd:  "post",
@@ -108,7 +108,7 @@ var (
 		"basic":    basicCmdGroup,
 		"appoint":  appointCmdGroup,
 		"profiles": profileSystemCmdGroup,
-		// "4chan":    chanCmdGroup,
+		"four":     fourCmdGroup,
 	}
 )
 
