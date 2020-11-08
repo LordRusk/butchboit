@@ -2,39 +2,10 @@
 This is nothing more then a project for me to get good at golang.
 
 ## What does the bot do
-It has 3 sections of commands,
+Read the source code.
 
-Basic:
-
-	Help - Show the help menu
-
-	Prefix - Set the prefix
-
-RSVP:
-
-	NewBool - Create a new bool event
-
-	RemoveBool - Remove a bool event
-
-	BoolInfo - Show info for a bool event
-
-	Rsvp - RSVP for a bool event
-
-	Bools - show currently active bool events
-
-ProfilingSystem: - A system of profiles I wrote for my friends and I.
-
-	Profile - Show a profile from `!profiles`
-
-	Profiles - Shows a list of all possible profiles
-
-4chan: - 4chan related commands
-
-	Post - Get a random 4chan post
-
-	Boards - Get a random 4chan post from specified board
-
-	Scope - Scope out a certain 4chan post
+## Whats up with butch?
+Currently, all previous sections have been fully reimplemented, especially the rsvp system, which is actually usable now. *four*, or the 4chan module had the least work put into it. I simply moved the post2Embed to boolbox, generalized it a bit, and left the rest of the code basically untouched. So its still as ugly and as not worky as it was before. Soon that will be taken care of as well. But I'm writing this a 0400, so ill sign off.
 
 #FQA - Frequently Questioned Answers
 
