@@ -5,10 +5,11 @@ import (
 	"os"
 
 	"github.com/diamondburned/arikawa/bot"
+	"github.com/lordrusk/butchbot/boolbox"
 )
 
 type Bot struct {
-	/* Context must not be embedded */
+	// context must not be embedded
 	Ctx *bot.Context
 }
 
@@ -16,11 +17,13 @@ var (
 	token   = os.Getenv("BOT_TOKEN")
 	Prefix  = "!"
 	BotName = "ButchBot"
+
+	Box *boolbox.Box
 )
 
 func main() {
 	if token == "" {
-		log.Fatalln("No $BOT_TOKEN")
+		log.Fatalln("No $BOTTOKEN")
 	}
 
 	commands := &Bot{}
@@ -31,12 +34,17 @@ func main() {
 
 		return nil
 	})
-
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	log.Println(BotName, "has started")
+
+	// get boolbox
+	Box, err = boolbox.NewBox(commands.Ctx)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	if err := wait(); err != nil {
 		log.Fatalln("Gateway fetal error:", err)

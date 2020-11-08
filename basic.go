@@ -1,204 +1,129 @@
 package main
 
 import (
-	"strconv"
-	"strings"
-
 	"github.com/diamondburned/arikawa/bot"
 	"github.com/diamondburned/arikawa/discord"
 	"github.com/diamondburned/arikawa/gateway"
+	"github.com/lordrusk/butchbot/boolbox"
 )
-
-type arg struct {
-	name       string
-	isOptional bool
-}
-
-type cmdInfo struct {
-	cmd   string
-	args  []arg
-	desc  string
-	state int
-}
-
-type cmdGroup struct {
-	name   string
-	cmdArr []cmdInfo
-}
 
 var (
-	/* Help message stuff */
-	HelpDivider = "------------\n"
-	helpColor   = "#fafafa"
-
-	/* A commands state can be one of three values:
-	 * 0 - Working order
-	 * 1 - Work in progress
-	 * 2 - Does not work
-	 */
+	// A commands state can be one of three values:
+	// 0 - Working order
+	// 1 - Work in progress
+	// 2 - Does not work
 
 	/* command groups */
-	basicCmdGroup = cmdGroup{
-		name: "Basic",
-		cmdArr: []cmdInfo{
-			cmdInfo{
-				cmd:  "help",
-				desc: "Show's the help page",
+	basicCmdGroup = boolbox.CmdGroup{
+		Name: "Basic",
+		CmdArr: []boolbox.Cmd{
+			boolbox.Cmd{
+				Cmd:  "help",
+				Desc: "Show's the help page",
 			},
-			cmdInfo{
-				cmd:  "prefix",
-				args: []arg{arg{name: "New Prefix", isOptional: false}},
-				desc: "Set a new prefix",
-			},
-		},
-	}
-
-	rsvpCmdGroup = cmdGroup{
-		name: "RSVP",
-		cmdArr: []cmdInfo{
-			cmdInfo{
-				cmd:  "newBool",
-				args: []arg{arg{name: "Bool Name", isOptional: false}, arg{name: "Bool Time", isOptional: false}, arg{name: "Bool Date", isOptional: false}, arg{name: "Bool Description (in quotes)", isOptional: false}},
-				desc: "Create a new bool event",
-			},
-			cmdInfo{
-				cmd:  "removeBool",
-				args: []arg{arg{name: "Selected Bool", isOptional: false}},
-				desc: "Remove a bool event",
-			},
-			cmdInfo{
-				cmd:  "boolInfo",
-				args: []arg{arg{name: "Selected Bool", isOptional: false}},
-				desc: "Show info for a bool event.",
-			},
-			cmdInfo{
-				cmd:  "rsvp",
-				args: []arg{arg{name: "Selected Bool", isOptional: false}},
-				desc: "rsvp for a bool event.",
-			},
-			cmdInfo{
-				cmd:  "bools",
-				desc: "Shows currently active bool events.",
+			boolbox.Cmd{
+				Cmd:  "prefix",
+				Args: []boolbox.Arg{boolbox.Arg{Name: "New Prefix", IsOptional: false}},
+				Desc: "Set a new prefix",
 			},
 		},
 	}
 
-	profilingSystemCmdGroup = cmdGroup{
-		name: "Profiling System",
-		cmdArr: []cmdInfo{
-			cmdInfo{
-				cmd:  "profile",
-				args: []arg{arg{name: "User Profile", isOptional: true}},
-				desc: "Show a profile from the list of `!profiles`",
+	appointCmdGroup = boolbox.CmdGroup{
+		Name: "Appoint",
+		CmdArr: []boolbox.Cmd{
+			boolbox.Cmd{
+				Cmd:  "newbool",
+				Args: []boolbox.Arg{boolbox.Arg{Name: "Script", IsOptional: false}},
+				Desc: "Create a new bool event",
 			},
-			cmdInfo{
-				cmd:  "profiles",
-				desc: "Get a list of profiles",
+			boolbox.Cmd{
+				Cmd:  "removebool",
+				Args: []boolbox.Arg{boolbox.Arg{Name: "Script", IsOptional: false}},
+				Desc: "Remove a bool event",
 			},
-		},
-	}
-
-	chanCmdGroup = cmdGroup{
-		name: "4chan",
-		cmdArr: []cmdInfo{
-			cmdInfo{
-				cmd:  "post",
-				desc: "Get a random 4chan post",
+			boolbox.Cmd{
+				Cmd:  "editbool",
+				Args: []boolbox.Arg{boolbox.Arg{Name: "Script", IsOptional: false}},
+				Desc: "Edit a bool",
 			},
-			cmdInfo{
-				cmd:  "board",
-				args: []arg{arg{name: "A 4chan board", isOptional: false}},
-				desc: "Get a random 4chan post from a specified board.",
+			boolbox.Cmd{
+				Cmd:  "bool",
+				Args: []boolbox.Arg{boolbox.Arg{Name: "Script", IsOptional: false}},
+				Desc: "Show info for a bool event.",
 			},
-			cmdInfo{
-				cmd:   "scope",
-				args:  []arg{arg{name: "4chan Board", isOptional: false}, arg{name: "4chan Post No.", isOptional: false}},
-				desc:  "Scope out a certain 4chan post.",
-				state: 2,
+			boolbox.Cmd{
+				Cmd:  "rsvp",
+				Args: []boolbox.Arg{boolbox.Arg{Name: "Script", IsOptional: false}},
+				Desc: "rsvp for a bool event.",
 			},
-			cmdInfo{
-				cmd:  "boards",
-				desc: "Get a list of 4chan boards",
+			boolbox.Cmd{
+				Cmd:  "bools",
+				Desc: "Shows currently active bool events.",
 			},
 		},
 	}
 
-	cmdGroupMap = map[string]cmdGroup{
-		"basic":     basicCmdGroup,
-		"rsvp":      rsvpCmdGroup,
-		"profiling": profilingSystemCmdGroup,
-		"4chan":     chanCmdGroup,
+	profileSystemCmdGroup = boolbox.CmdGroup{
+		Name: "Profiles",
+		CmdArr: []boolbox.Cmd{
+			boolbox.Cmd{
+				Cmd:  "profile",
+				Args: []boolbox.Arg{boolbox.Arg{Name: "User Profile", IsOptional: true}},
+				Desc: "Show a profile from the list of `!profiles`",
+			},
+			boolbox.Cmd{
+				Cmd:  "profiles",
+				Desc: "Get a list of profiles",
+			},
+		},
+	}
+
+	chanCmdGroup = boolbox.CmdGroup{
+		Name: "4chan",
+		CmdArr: []boolbox.Cmd{
+			boolbox.Cmd{
+				Cmd:  "post",
+				Desc: "Get a random 4chan post",
+			},
+			boolbox.Cmd{
+				Cmd:  "board",
+				Args: []boolbox.Arg{boolbox.Arg{Name: "A 4chan board", IsOptional: false}},
+				Desc: "Get a random 4chan post from a specified board.",
+			},
+			boolbox.Cmd{
+				Cmd:   "scope",
+				Args:  []boolbox.Arg{boolbox.Arg{Name: "4chan Board", IsOptional: false}, boolbox.Arg{Name: "4chan Post No.", IsOptional: false}},
+				Desc:  "Scope out a certain 4chan post.",
+				State: 2,
+			},
+			boolbox.Cmd{
+				Cmd:  "boards",
+				Desc: "Get a list of 4chan boards",
+			},
+		},
+	}
+
+	cmdGroupMap = map[string]boolbox.CmdGroup{
+		"basic":    basicCmdGroup,
+		"appoint":  appointCmdGroup,
+		"profiles": profileSystemCmdGroup,
+		// "4chan":    chanCmdGroup,
 	}
 )
 
-/* Bot commands */
+func (botStruct *Bot) Help(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
+	helpMsg, err := Box.GenHelpMsg(Prefix, BotName, cmdGroupMap)
+	if err != nil {
+		return nil, err
+	}
+
+	return helpMsg, nil
+}
+
 func (botStruct *Bot) Prefix(m *gateway.MessageCreateEvent, newPrefix string) (string, error) {
 	Prefix = newPrefix
 	botStruct.Ctx.HasPrefix = bot.NewPrefix(Prefix)
 
 	return "`" + Prefix + "` is the new prefix!", nil
-}
-
-func (botStruct *Bot) Russell(*gateway.MessageCreateEvent) (string, error) {
-	return "Boy am I hard!", nil
-}
-
-func (botStruct *Bot) Help(*gateway.MessageCreateEvent) (*discord.Embed, error) {
-	/* generate the help command */
-	var helpMsg strings.Builder
-
-	helpMsg.WriteString(HelpDivider)
-	helpMsg.WriteString("**Prefix:**  `")
-	helpMsg.WriteString(Prefix)
-	helpMsg.WriteString("`\n")
-	helpMsg.WriteString(HelpDivider)
-	helpMsg.WriteString("**Commands**\n")
-	helpMsg.WriteString(HelpDivider)
-
-	for _, cmdGroup := range cmdGroupMap {
-		helpMsg.WriteString("***")
-		helpMsg.WriteString(cmdGroup.name)
-		helpMsg.WriteString(" Commands:***\n")
-		for _, cmdInfo := range cmdGroup.cmdArr {
-			if cmdInfo.state == 1 {
-				helpMsg.WriteString("__[ Work In Progress ]__ ")
-			} else if cmdInfo.state == 2 {
-				helpMsg.WriteString("~~")
-			}
-			helpMsg.WriteString("**")
-			helpMsg.WriteString(cmdInfo.cmd)
-			helpMsg.WriteString("**")
-			for i := 0; i < len(cmdInfo.args); i++ {
-				helpMsg.WriteString(" [ ")
-				if cmdInfo.args[i].isOptional == true {
-					helpMsg.WriteString("*Optional* ")
-				}
-				helpMsg.WriteString(cmdInfo.args[i].name)
-				helpMsg.WriteString(" ]")
-			}
-			helpMsg.WriteString(" -- *")
-			helpMsg.WriteString(cmdInfo.desc)
-			helpMsg.WriteString("*")
-			if cmdInfo.state == 2 {
-				helpMsg.WriteString("~~")
-			}
-			helpMsg.WriteString("\n")
-		}
-		helpMsg.WriteString(HelpDivider)
-	}
-
-	/* color */
-	colorHex, err := strconv.ParseInt((helpColor)[1:], 16, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	/* make the embed */
-	embed := discord.Embed{
-		Title:       BotName + " Help Page:",
-		Description: helpMsg.String(),
-		Color:       discord.Color(colorHex),
-	}
-
-	return &embed, nil
 }
