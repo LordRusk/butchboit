@@ -144,10 +144,27 @@ func (box *Box) NumApptList(prefix string, suffix string, appointments []Appoint
 	return builder.String()
 }
 
-// gives a map with ints referring
+// same function as appove but for
+// []Rsvp. Also helpful for scripting.
+func (box *Box) NumRsvpList(prefix string, suffix string, resv []Rsvp) string {
+	var builder strings.Builder
+
+	builder.Write([]byte(prefix))
+	for num, rsvp := range resv {
+		builder.Write([]byte("["))
+		builder.Write([]byte(strconv.Itoa(num)))
+		builder.Write([]byte("] "))
+		builder.Write([]byte(rsvp.User.Username))
+		builder.Write([]byte("\n"))
+	}
+	builder.Write([]byte(suffix))
+
+	return builder.String()
+}
+
+// gives an array with ints referring
 // to, in order, the names of fields
-// from Appointment. Helpful for
-// scripting.
+// from Appointment. Helpful for scripting.
 func (box *Box) GetApptSects() []string {
 	s := make([]string, 5)
 

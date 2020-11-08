@@ -26,6 +26,9 @@ var (
 	rsvpInq = "What is your estimated pickup time?"
 )
 
+// used for Editbool() menus
+var rsvpNumOpts = "```\n[0] Edit Time\n[1] Delete rsvp```"
+
 // great demonstrastion of the
 // Ask() function.
 func (botStruct *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
@@ -182,18 +185,13 @@ func (botStruct *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments
 			return "", err
 		}
 
-		// check that time is correctly formatted
-		pBoolTime := strings.Split(resp, ":")
-		if len(pBoolTime) == 2 {
-			_, firstErr := strconv.Atoi(pBoolTime[0])
-			_, secondErr := strconv.Atoi(pBoolTime[1])
-			if firstErr == nil || secondErr == nil {
-				pass = true
-				rsvp.PuTime = resp
-			}
+		if err := Box.CheckTime(resp); err == nil {
+			rsvp.PuTime = resp
+			pass = true
+
 		}
 
-		timeInq = "Invalid date! Try 7:30, 20:45, etc..."
+		rsvpInq = "Invalid time! Try 7:30, 20:45, etc..."
 	}
 
 	rsvpInq = "What is your estimated pickup time?"
@@ -206,7 +204,9 @@ func (botStruct *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments
 
 func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 	var bwoolNum int
+	var rsvpNum int
 	var sectNum int
+	var rsvpMenuNum int
 	var pass bool
 	var builder strings.Builder
 
@@ -215,6 +215,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 		if err != nil {
 			return "", err
 		}
+
 		intResp, _ := strconv.Atoi(resp)
 		for num, _ := range Bools.Appts {
 			if num == intResp {
@@ -234,7 +235,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 	boolFields := Box.GetApptSects()
 
 	builder.Write([]byte("```\n"))
-	for i := 0; i < len(boolFields)-1; i++ {
+	for i := 0; i < len(boolFields); i++ {
 		builder.Write([]byte("["))
 		builder.Write([]byte(strconv.Itoa(i)))
 		builder.Write([]byte("] "))
@@ -305,6 +306,87 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 
 		Bools.Appts[bwoolNum].Desc = resp
 		return "Successfully changed bool description!", nil
+	} else if sectNum == 4 {
+		if len(Bools.Appts[bwoolNum].Resv) < 1 {
+			return "", errors.New("Nobody has rsvp'd, so there are no rsvp's to edit.")
+		}
+
+		pass = false
+		for pass == false {
+			resp, err := Box.Ask(m, Box.NumRsvpList("Which rsvp would you like to change??\n```\n", "```", Bools.Appts[bwoolNum].Resv))
+			if err != nil {
+				return "", err
+			}
+
+			intResp, _ := strconv.Atoi(resp)
+			for num, _ := range Bools.Appts[bwoolNum].Resv {
+				if num == intResp {
+					rsvpNum = num
+					pass = true
+				}
+			}
+
+			if pass == false {
+				_, err = Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+				if err != nil {
+					return "", err
+				}
+			}
+
+		}
+
+		pass = false
+		for pass == false {
+			resp, err := Box.Ask(m, "What would you like to do to the rsvp?\n"+rsvpNumOpts)
+			if err != nil {
+				return "", err
+			}
+
+			intResp, err := strconv.Atoi(resp)
+			if err == nil {
+				for i := 0; i < len(boolFields); i++ {
+					if i == intResp {
+						rsvpMenuNum = i
+						pass = true
+					}
+				}
+			}
+
+			if pass == false {
+				_, err = Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+				if err != nil {
+					return "", err
+				}
+			}
+		}
+
+		if rsvpMenuNum == 0 {
+			resp, err := Box.Ask(m, "What would you like the new pickup time be?")
+			if err != nil {
+				return "", err
+			}
+
+			if err := Box.CheckTime(resp); err != nil {
+				_, err = Box.Ctx.SendMessage(m.ChannelID, "Invalid date! Try 7:30, 20:45, etc...", nil)
+				if err != nil {
+					return "", err
+				}
+			}
+
+			Bools.Appts[bwoolNum].Resv[rsvpNum].PuTime = resp
+			return "Successfully changed rsvp time!", nil
+		} else if rsvpMenuNum == 1 {
+			resp, err := Box.Ask(m, "Are you sure you want to delete this rsvp? [y/N]")
+			if err != nil {
+				return "", err
+			}
+
+			if resp == "y" || resp == "Y" {
+				Bools.Appts[bwoolNum].Resv = Box.RemoveRsvp(Bools.Appts[bwoolNum].Resv, rsvpNum)
+			}
+
+			return "Successfully deleted rsvp!", nil
+		}
 	}
 
 	return "", errors.New("There should be no way you get this error...so good job!")
