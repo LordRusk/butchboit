@@ -17,11 +17,14 @@ type IntRange struct {
 }
 
 var (
+	// aesthetic stuff
+	scopeDelim  = "@" // The deliminator used between the threadNum and postNum in scope.
+	_, boards   = gochan.GetBoards()
+	r4color     = "#006500"
+	boardsColor = "#12d7a9"
+
 	/* godesu stuff */
 	gochan          = godesu.New()
-	_, boards       = gochan.GetBoards()
-	r4color         = "#006500"
-	boardsColor     = "#12d7a9"
 	scheme          = "https"
 	imgBaseURL      = "i.4cdn.org"
 	defualt4chanURL = "boards.4chan.org"
@@ -73,7 +76,7 @@ func (botStruct *Bot) Post(*gateway.MessageCreateEvent) (*discord.Embed, error) 
 	irp := IntRange{0, len(posts) - 1}
 	postNum := irp.NextRandom(r)
 
-	/*** BUILD THE EMBED ***/
+	/* build the embed */
 	embed, err := Box.FourToEmbed(r4color, thread, postNum)
 	if err != nil {
 		return nil, err
@@ -83,6 +86,8 @@ func (botStruct *Bot) Post(*gateway.MessageCreateEvent) (*discord.Embed, error) 
 }
 
 func (botStruct *Bot) Board(m *gateway.MessageCreateEvent, boardName string) (*discord.Embed, error) {
+	var pass bool
+
 	if boardName == "" {
 		return nil, errors.New("Error! No Boards Specified. Please use `!Boards` for a list.")
 	}
@@ -90,14 +95,13 @@ func (botStruct *Bot) Board(m *gateway.MessageCreateEvent, boardName string) (*d
 	/* backend stuff */
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	var boardExists bool
 	for _, board := range boards.All {
 		if boardName == board.Board {
-			boardExists = true
+			pass = true
 		}
 	}
 
-	if boardExists != true {
+	if pass != true {
 		return nil, errors.New("Error! Board does not exist. Get a list with `!boards`!")
 	}
 
@@ -126,7 +130,7 @@ func (botStruct *Bot) Board(m *gateway.MessageCreateEvent, boardName string) (*d
 	irp := IntRange{0, len(posts) - 1}
 	postNum := irp.NextRandom(r)
 
-	/*** BUILD THE EMBED ***/
+	/* build the embed */
 	embed, err := Box.FourToEmbed(r4color, thread, postNum)
 	if err != nil {
 		return nil, err
@@ -135,46 +139,62 @@ func (botStruct *Bot) Board(m *gateway.MessageCreateEvent, boardName string) (*d
 	return embed, nil
 }
 
-//func (botStruct *Bot) Scope(m *gateway.MessageCreateEvent, boardName string, postNo int) (*discord.Embed, error) {
-/*	/* godesu stuff /
- *	board := gochan.Board(boardName)
- *
- *	err, catalog := board.GetCatalog()
- *	if err != nil {
- *		return nil, err
- *	}
- *
- *	threadNoArr := []int{}
- *	for _, page := range catalog.Pages {
- *		for _, thread := range page.Threads {
- *			threadNoArr = append(threadNoArr, thread.No)
- *		}
- *	}
- *
- *	var postNum int
- *	var finalThread godesu.Thread
- *	for _, threadNo := range threadNoArr {
- *		err, thread := board.GetThread(threadNo)
- *		if err != nil {
- *			return nil, err
- *		}
- *		for num, post := range thread.Posts {
- *			if post.No == postNo {
- *				postNum = num
- *				finalThread = thread
- *			}
- *		}
- *	}
- *
- *	/*** BUILD THE EMBED /
- *	embed, err := post2Embed(finalThread, postNum)
- *	if err != nil {
- *		return nil, err
- *	}
- *
- *	return embed, nil
- *}
- */
+// func (botStruct *Bot) Scope(m *gateway.MessageCreateEvent, boardName string, postInput int) (*discord.Embed, error) {
+//        var selBoard = &godesu.ControlBoard{}
+//        var selThread godesu.Catalog.Thread
+//        var postNum int
+//        var pass bool
+//
+//        for _, board := range boards.All {
+//        	if boardName == board.Board {
+//        		selBoard = gochan.Board(boardName)
+//        		pass = true
+//        	}
+//        }
+//
+//        if pass != true {
+//        	return nil, errors.New("Error! Board does not exist. Get a list with `!boards`!")
+//        }
+//
+//        // parse thread/post nums
+//        pPostInput := strings.Split(strconv.Itoa(postInput), scopeDelim)
+//        if len(pPostInput) != 2 {
+//        	return nil, errors.New("Error! Thread and post numbers not formatted correctly. Try `threadNum" + scopeDelim + "postNum`!")
+//        }
+//
+//        err, catalog := selBoard.GetCatalog()
+//        if err != nil {
+//        	return nil, err
+//        }
+//
+//        pass = false
+//        for _, page := range catalog.Pages {
+//        	for _, thread := range page.Threads {
+//        		if thread.No == pPostInput[0] {
+//        			selThread = thread
+//        			pass = true
+//        		}
+//        	}
+//        }
+//
+//        if pass == false {
+//        	return nil, errors.New("Error! Thread not found!")
+//        }
+//
+//        for num, post := range selThread.Posts {
+//        	if post.No == postNo {
+//        		postNum = num
+//        	}
+//        }
+//
+//        /* build the embed */
+//        embed, err := Box.FourToEmbed(r4color, selThread, postNum)
+//        if err != nil {
+//        	return nil, err
+//        }
+//
+//        return embed, nil
+// }
 
 func (botStruct *Bot) Boards(*gateway.MessageCreateEvent) (*discord.Embed, error) {
 	/* godesu stuff */
@@ -182,11 +202,12 @@ func (botStruct *Bot) Boards(*gateway.MessageCreateEvent) (*discord.Embed, error
 
 	var description strings.Builder
 	for _, board := range boards.All {
-		description.WriteString("**")
+		description.WriteString("** | ")
 		description.WriteString(board.Board)
 		description.WriteString("**")
 		description.WriteString(" ")
 	}
+	description.WriteString("**|**")
 
 	/* color */
 	colorHex, err := strconv.ParseInt((boardsColor)[1:], 16, 64)

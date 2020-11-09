@@ -41,11 +41,16 @@ type CmdGroup struct {
 type Profile struct {
 	Name     string         `json:"name,omitempty"`
 	Nickname string         `json:"nickname,omitempty"`
-	Id       discord.UserID `json:"id,omitempty"`
+	ID       discord.UserID `json:"id,string"`
 	Color    string         `json:"color,omitempty"`
 	Triggers []string       `json:"triggers,omitempty"`
-	Tags     []string       `json:"triggers,omitempty"`
-	Info     string         `json:"triggers,omitempty"`
+	Tags     []string       `json:"tags,omitempty"`
+	Info     string         `json:"info,omitempty"`
+}
+
+// Profile wrapper for json
+type Profiles struct {
+	Ps []Profile `json:"ps,omitempty"`
 }
 
 // rsvp struct used to keep track

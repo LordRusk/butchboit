@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -13,21 +14,26 @@ import (
 )
 
 var (
-	// path to where bools (appointments) are stored
-	path = os.Getenv("HOME") + "/.local/share/bools.json"
+	// apptsPath to where bools (appointments) are stored
+	apptsPath = os.Getenv("HOME") + "/.local/share/bools.json"
 
 	// get bools (appointments)
-	Bools = Box.GetStoredAppointments(path)
+	Bools = boolbox.Appointments{}
+	_     = Box.GetStoredModel(apptsPath, &Bools)
 
 	// inquires
-	dateInq = "Date?"
-	timeInq = "Start of pickup time?"
-	descInq = "Description?"
-	rsvpInq = "What is your estimated pickup time?"
-)
+	dateInq    = "Date?"
+	timeInq    = "Start of pickup time?"
+	descInq    = "Description?"
+	rsvpInq    = "What is your estimated pickup time?"
+	dateInqDef = dateInq
+	timeInqDef = timeInq
+	descInqDef = descInq
+	rsvpInqDef = rsvpInq
 
-// used for Editbool() menus
-var rsvpNumOpts = "```\n[0] Edit Time\n[1] Delete rsvp```"
+	// used for Editbool() menus
+	rsvpNumOpts = "```\n[0] Edit Time\n[1] Delete rsvp```"
+)
 
 // great demonstrastion of the
 // Ask() function.
@@ -89,13 +95,13 @@ func (botStruct *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 	}
 
 	// set inquires back to default
-	dateInq = "Date?"
-	timeInq = "Time?"
-	descInq = "Description?"
+	dateInq = dateInqDef
+	timeInq = timeInqDef
+	descInq = descInqDef
 
 	Bools.Appts = append(Bools.Appts, appointment)
 
-	Box.StoreAppointments(path, Bools)
+	Box.StoreModel(apptsPath, Bools)
 	return "New bool added! Check for a current list of bools with `" + Prefix + "bools`!", nil
 }
 
@@ -131,14 +137,16 @@ func (botStruct *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArg
 		return "", nil
 	}
 
-	if resp != "y" && resp != "Y" {
-		return "", errors.New("Bool not removed")
+	if resp == "y" || resp == "Y" {
+		Bools.Appts = Box.RemoveAppointment(Bools.Appts, bwoolNum)
+		if err := Box.StoreModel(apptsPath, Bools); err != nil {
+			log.Fatalln(err)
+		}
+
+		return "Successfully removed bool!", nil
 	}
 
-	Bools.Appts = Box.RemoveAppointment(Bools.Appts, bwoolNum)
-	Box.StoreAppointments(path, Bools)
-
-	return "Successfully removed bool!", nil
+	return "Bool not removed.", nil
 }
 
 // another demonstration on
@@ -194,10 +202,10 @@ func (botStruct *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments
 		rsvpInq = "Invalid time! Try 7:30, 20:45, etc..."
 	}
 
-	rsvpInq = "What is your estimated pickup time?"
+	rsvpInq = rsvpInqDef
 
 	Bools.Appts[bwoolNum].Resv = append(Bools.Appts[bwoolNum].Resv, rsvp)
-	Box.StoreAppointments(path, Bools)
+	Box.StoreModel(apptsPath, Bools)
 
 	return "Successfully RSVP'd!", nil
 }
@@ -306,31 +314,31 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 
 		Bools.Appts[bwoolNum].Desc = resp
 		return "Successfully changed bool description!", nil
-	} else if sectNum == 4 {
-		if len(Bools.Appts[bwoolNum].Resv) < 1 {
-			return "", errors.New("Nobody has rsvp'd, so there are no rsvp's to edit.")
+	}
+
+	if len(Bools.Appts[bwoolNum].Resv) < 1 {
+		return "", errors.New("Nobody has rsvp'd, so there are no rsvp's to edit.")
+	}
+
+	pass = false
+	for pass == false {
+		resp, err := Box.Ask(m, Box.NumRsvpList("Which rsvp would you like to change??\n```\n", "```", Bools.Appts[bwoolNum].Resv))
+		if err != nil {
+			return "", err
 		}
 
-		pass = false
-		for pass == false {
-			resp, err := Box.Ask(m, Box.NumRsvpList("Which rsvp would you like to change??\n```\n", "```", Bools.Appts[bwoolNum].Resv))
+		intResp, _ := strconv.Atoi(resp)
+		for num, _ := range Bools.Appts[bwoolNum].Resv {
+			if num == intResp {
+				rsvpNum = num
+				pass = true
+			}
+		}
+
+		if pass == false {
+			_, err = Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
 			if err != nil {
 				return "", err
-			}
-
-			intResp, _ := strconv.Atoi(resp)
-			for num, _ := range Bools.Appts[bwoolNum].Resv {
-				if num == intResp {
-					rsvpNum = num
-					pass = true
-				}
-			}
-
-			if pass == false {
-				_, err = Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
-				if err != nil {
-					return "", err
-				}
 			}
 
 		}
@@ -344,7 +352,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 
 			intResp, err := strconv.Atoi(resp)
 			if err == nil {
-				for i := 0; i < len(boolFields); i++ {
+				for i := 0; i < 3; i++ {
 					if i == intResp {
 						rsvpMenuNum = i
 						pass = true
@@ -360,20 +368,26 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 			}
 		}
 
+		var passed bool
 		if rsvpMenuNum == 0 {
-			resp, err := Box.Ask(m, "What would you like the new pickup time be?")
-			if err != nil {
-				return "", err
-			}
-
-			if err := Box.CheckTime(resp); err != nil {
-				_, err = Box.Ctx.SendMessage(m.ChannelID, "Invalid date! Try 7:30, 20:45, etc...", nil)
+			for passed == false {
+				resp, err := Box.Ask(m, "What would you like the new pickup time be?")
 				if err != nil {
 					return "", err
 				}
+
+				if err := Box.CheckTime(resp); err == nil {
+					Bools.Appts[bwoolNum].Resv[rsvpNum].PuTime = resp
+					passed = true
+				} else {
+					_, err = Box.Ctx.SendMessage(m.ChannelID, "Invalid date! Try 7:30, 20:45, etc...", nil)
+					if err != nil {
+						return "", err
+					}
+				}
+
 			}
 
-			Bools.Appts[bwoolNum].Resv[rsvpNum].PuTime = resp
 			return "Successfully changed rsvp time!", nil
 		} else if rsvpMenuNum == 1 {
 			resp, err := Box.Ask(m, "Are you sure you want to delete this rsvp? [y/N]")
@@ -383,9 +397,15 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 
 			if resp == "y" || resp == "Y" {
 				Bools.Appts[bwoolNum].Resv = Box.RemoveRsvp(Bools.Appts[bwoolNum].Resv, rsvpNum)
+				if err := Box.StoreModel(apptsPath, Bools); err != nil {
+					log.Fatalln(err)
+				}
+
+				return "Successfully deleted rsvp!", nil
 			}
 
-			return "Successfully deleted rsvp!", nil
+			return "Rsvp not deleted.", nil
+
 		}
 	}
 
@@ -400,8 +420,8 @@ func (botStruct *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error
 
 	fields := []discord.EmbedField{}
 
+	intResp, _ := strconv.Atoi(resp)
 	for num, bwool := range Bools.Appts {
-		intResp, _ := strconv.Atoi(resp)
 		if num == intResp {
 			if len(bwool.Resv) > 0 {
 				for _, rsvp := range bwool.Resv {

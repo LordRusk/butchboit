@@ -44,9 +44,9 @@ func NewBox(ctx *bot.Context) (*Box, error) {
 	return &Box{Ctx: ctx}, nil
 }
 
-// store appointments in json file
-func (box *Box) StoreAppointments(path string, appointments Appointments) error {
-	jsonBytes, err := json.Marshal(Appointments{Appts: appointments.Appts})
+// store a model in a json file
+func (box *Box) StoreModel(path string, model interface{}) error {
+	jsonBytes, err := json.MarshalIndent(model, "", "	")
 	if err != nil {
 		return err
 	}
@@ -62,18 +62,17 @@ func (box *Box) StoreAppointments(path string, appointments Appointments) error 
 // get stored appointments from json file.
 // returns blank Appointments for simplicities
 // sake.
-func (box *Box) GetStoredAppointments(path string) Appointments {
+func (box *Box) GetStoredModel(path string, model interface{}) error {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		return Appointments{}
+		return err
 	}
 
-	var appointments Appointments
-	if err := json.Unmarshal(bytes, &appointments); err != nil {
-		return Appointments{}
+	if err := json.Unmarshal(bytes, model); err != nil {
+		return err
 	}
 
-	return appointments
+	return nil
 }
 
 // remove an appointment from []appointment
@@ -172,7 +171,7 @@ func (box *Box) GetApptSects() []string {
 	s[1] = "Date"
 	s[2] = "Time"
 	s[3] = "Decs"
-	s[4] = "[]rsvp"
+	s[4] = "[]Rsvp"
 
 	return s
 }
