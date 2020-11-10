@@ -204,6 +204,8 @@ func (botStruct *Bot) Boards(*gateway.MessageCreateEvent) (*discord.Embed, error
 	for _, board := range boards.All {
 		description.WriteString("** | ")
 		description.WriteString(board.Board)
+		description.WriteString(" - ")
+		description.WriteString(board.Title)
 		description.WriteString("**")
 		description.WriteString(" ")
 	}

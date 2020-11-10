@@ -32,7 +32,7 @@ var (
 	rsvpInqDef = rsvpInq
 
 	// used for Editbool() menus
-	rsvpNumOpts = "```\n[0] Edit Time\n[1] Delete rsvp```"
+	rsvpNumOpts = "```\n[0] Edit Time\n[1] Delete rsvp\n[2] Exit```"
 )
 
 // great demonstrastion of the
@@ -41,22 +41,25 @@ func (botStruct *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 	var pass bool
 	appointment := boolbox.Appointment{}
 
+	uc := make(chan int)
+	go Box.Track2Delete(m, uc)
+
 	// get the name of the appointment
 	resp, err := Box.Ask(m, "Name?")
 	if err != nil {
+		uc <- 0
 		return "", err
 	}
 
 	if resp != "" {
 		appointment.Name = resp
-		pass = true
 	}
 
 	// get the date of the appointment
-	pass = false
 	for pass == false {
 		resp, err := Box.Ask(m, dateInq)
 		if err != nil {
+			uc <- 0
 			return "", err
 		}
 
@@ -73,6 +76,7 @@ func (botStruct *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 	for pass == false {
 		resp, err := Box.Ask(m, timeInq)
 		if err != nil {
+			uc <- 0
 			return "", err
 		}
 
@@ -87,6 +91,7 @@ func (botStruct *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 	// get the description of the appointment
 	resp, err = Box.Ask(m, descInq)
 	if err != nil {
+		uc <- 0
 		return "", err
 	}
 
@@ -100,8 +105,9 @@ func (botStruct *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 	descInq = descInqDef
 
 	Bools.Appts = append(Bools.Appts, appointment)
-
 	Box.StoreModel(apptsPath, Bools)
+	uc <- 0
+
 	return "New bool added! Check for a current list of bools with `" + Prefix + "bools`!", nil
 }
 
@@ -109,9 +115,13 @@ func (botStruct *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArg
 	var bwoolNum int
 	var pass bool
 
+	uc := make(chan int)
+	go Box.Track2Delete(m, uc)
+
 	for pass == false {
 		resp, err := Box.Ask(m, Box.NumApptList("Which bool would you like?\n```\n", "```", Bools.Appts))
 		if err != nil {
+			uc <- 0
 			return "", err
 		}
 
@@ -124,7 +134,7 @@ func (botStruct *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArg
 		}
 
 		if pass == false {
-			_, err = Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+			_, err := Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
 			if err != nil {
 				return "", err
 			}
@@ -134,6 +144,7 @@ func (botStruct *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArg
 
 	resp, err := Box.Ask(m, "Do you really want to remove that bool? [y/N]")
 	if err != nil {
+		uc <- 0
 		return "", nil
 	}
 
@@ -143,6 +154,7 @@ func (botStruct *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArg
 			log.Fatalln(err)
 		}
 
+		uc <- 0
 		return "Successfully removed bool!", nil
 	}
 
@@ -155,9 +167,13 @@ func (botStruct *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments
 	var bwoolNum int
 	var pass bool
 
+	uc := make(chan int)
+	go Box.Track2Delete(m, uc)
+
 	for pass == false {
 		resp, err := Box.Ask(m, Box.NumApptList("Which bool would you like to rsvp for?\n```\n", "```", Bools.Appts))
 		if err != nil {
+			uc <- 0
 			return "", err
 		}
 
@@ -170,7 +186,7 @@ func (botStruct *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments
 		}
 
 		if pass == false {
-			_, err = Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+			_, err := Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
 			if err != nil {
 				return "", err
 			}
@@ -180,6 +196,8 @@ func (botStruct *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments
 	for Num, rsvp := range Bools.Appts[bwoolNum].Resv {
 		if rsvp.User == m.Author {
 			Bools.Appts[bwoolNum].Resv = Box.RemoveRsvp(Bools.Appts[bwoolNum].Resv, Num)
+			uc <- 0
+
 			return "Successfully un-RSVP'd!", nil
 		}
 	}
@@ -190,6 +208,7 @@ func (botStruct *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments
 	for pass == false {
 		resp, err := Box.Ask(m, rsvpInq)
 		if err != nil {
+			uc <- 0
 			return "", err
 		}
 
@@ -206,6 +225,7 @@ func (botStruct *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments
 
 	Bools.Appts[bwoolNum].Resv = append(Bools.Appts[bwoolNum].Resv, rsvp)
 	Box.StoreModel(apptsPath, Bools)
+	uc <- 0
 
 	return "Successfully RSVP'd!", nil
 }
@@ -218,9 +238,13 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 	var pass bool
 	var builder strings.Builder
 
+	uc := make(chan int)
+	go Box.Track2Delete(m, uc)
+
 	for pass == false {
 		resp, err := Box.Ask(m, Box.NumApptList("Which bool would you like to edit?\n```\n", "```", Bools.Appts))
 		if err != nil {
+			uc <- 0
 			return "", err
 		}
 
@@ -233,7 +257,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 		}
 
 		if pass == false {
-			_, err = Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+			_, err := Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
 			if err != nil {
 				return "", err
 			}
@@ -256,6 +280,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 	for pass == false {
 		resp, err := Box.Ask(m, "Which part of the bool would you like to edit?\n"+builder.String())
 		if err != nil {
+			uc <- 0
 			return "", nil
 		}
 
@@ -267,7 +292,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 		}
 
 		if pass == false {
-			_, err = Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+			_, err := Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
 			if err != nil {
 				return "", err
 			}
@@ -277,14 +302,18 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 	if sectNum == 0 {
 		resp, err := Box.Ask(m, "What would you like to change the name to?")
 		if err != nil {
+			uc <- 0
 			return "", err
 		}
 
 		Bools.Appts[bwoolNum].Name = resp
+		uc <- 0
+
 		return "Successfully changed bool name!", nil
 	} else if sectNum == 1 {
 		resp, err := Box.Ask(m, "What would you like to change the date to?")
 		if err != nil {
+			uc <- 0
 			return "", err
 		}
 
@@ -293,10 +322,13 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 		}
 
 		Bools.Appts[bwoolNum].Date = resp
+		uc <- 0
+
 		return "Successfully changed bool date!", nil
 	} else if sectNum == 2 {
 		resp, err := Box.Ask(m, "What would you like to change the time to?")
 		if err != nil {
+			uc <- 0
 			return "", err
 		}
 
@@ -305,18 +337,24 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 		}
 
 		Bools.Appts[bwoolNum].Time = resp
+		uc <- 0
+
 		return "Successfully changed bool time!", nil
 	} else if sectNum == 3 {
 		resp, err := Box.Ask(m, "What would you like to change the description to?")
 		if err != nil {
+			uc <- 0
 			return "", err
 		}
 
 		Bools.Appts[bwoolNum].Desc = resp
+		uc <- 0
+
 		return "Successfully changed bool description!", nil
 	}
 
 	if len(Bools.Appts[bwoolNum].Resv) < 1 {
+		uc <- 0
 		return "", errors.New("Nobody has rsvp'd, so there are no rsvp's to edit.")
 	}
 
@@ -324,6 +362,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 	for pass == false {
 		resp, err := Box.Ask(m, Box.NumRsvpList("Which rsvp would you like to change??\n```\n", "```", Bools.Appts[bwoolNum].Resv))
 		if err != nil {
+			uc <- 0
 			return "", err
 		}
 
@@ -336,7 +375,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 		}
 
 		if pass == false {
-			_, err = Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+			_, err := Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
 			if err != nil {
 				return "", err
 			}
@@ -347,6 +386,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 		for pass == false {
 			resp, err := Box.Ask(m, "What would you like to do to the rsvp?\n"+rsvpNumOpts)
 			if err != nil {
+				uc <- 0
 				return "", err
 			}
 
@@ -361,7 +401,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 			}
 
 			if pass == false {
-				_, err = Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+				_, err := Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
 				if err != nil {
 					return "", err
 				}
@@ -373,30 +413,37 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 			for passed == false {
 				resp, err := Box.Ask(m, "What would you like the new pickup time be?")
 				if err != nil {
+					uc <- 0
 					return "", err
 				}
 
-				if err := Box.CheckTime(resp); err == nil {
-					Bools.Appts[bwoolNum].Resv[rsvpNum].PuTime = resp
-					passed = true
-				} else {
-					_, err = Box.Ctx.SendMessage(m.ChannelID, "Invalid date! Try 7:30, 20:45, etc...", nil)
+				if err := Box.CheckTime(resp); err != nil {
+					_, err := Box.Ctx.SendMessage(m.ChannelID, "Invalid date! Try 7:30, 20:45, etc...", nil)
 					if err != nil {
 						return "", err
 					}
+				} else {
+					passed = true
 				}
 
-			}
+				if passed == true {
+					Bools.Appts[bwoolNum].Resv[rsvpNum].PuTime = resp
+					uc <- 0
 
-			return "Successfully changed rsvp time!", nil
+					return "Successfully changed rsvp time!", nil
+				}
+			}
 		} else if rsvpMenuNum == 1 {
 			resp, err := Box.Ask(m, "Are you sure you want to delete this rsvp? [y/N]")
 			if err != nil {
+				uc <- 0
 				return "", err
 			}
 
 			if resp == "y" || resp == "Y" {
 				Bools.Appts[bwoolNum].Resv = Box.RemoveRsvp(Bools.Appts[bwoolNum].Resv, rsvpNum)
+				uc <- 0
+
 				if err := Box.StoreModel(apptsPath, Bools); err != nil {
 					log.Fatalln(err)
 				}
@@ -404,8 +451,8 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 				return "Successfully deleted rsvp!", nil
 			}
 
+			uc <- 0
 			return "Rsvp not deleted.", nil
-
 		}
 	}
 
@@ -413,8 +460,12 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 }
 
 func (botStruct *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
+	uc := make(chan int)
+	go Box.Track2Delete(m, uc)
+
 	resp, err := Box.Ask(m, Box.NumApptList("Which bool would you like?\n```\n", "```", Bools.Appts))
 	if err != nil {
+		uc <- 0
 		return nil, err
 	}
 
@@ -441,6 +492,7 @@ func (botStruct *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error
 				Fields:      fields,
 			}
 
+			uc <- 0
 			return &embed, nil
 		}
 	}
@@ -448,7 +500,7 @@ func (botStruct *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error
 	return nil, errors.New("Bool does not exist, get a list with `" + Prefix + "bools`.")
 }
 
-func (botStruct *Bot) Bools(_ *gateway.MessageCreateEvent) (*discord.Embed, error) {
+func (botStruct *Bot) Bools(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 	if len(Bools.Appts) == 0 {
 		return nil, errors.New("No bools currently active. Use `" + Prefix + "newbool` to add a new scheduled bool")
 	}

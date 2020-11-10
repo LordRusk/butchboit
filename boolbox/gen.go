@@ -1,17 +1,14 @@
 package boolbox
 
+// This file is where all of boolbox's
+// generation functions like GenHelpMessage()
+// call home.
+
 import (
-	"context"
-	"encoding/json"
-	"errors"
-	"io/ioutil"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/diamondburned/arikawa/bot"
 	"github.com/diamondburned/arikawa/discord"
-	"github.com/diamondburned/arikawa/gateway"
 	"github.com/lordrusk/godesu"
 	"jaytaylor.com/html2text"
 )
@@ -21,107 +18,12 @@ var (
 	HelpDivider = "------------\n"
 	HelpColor   = "#fafafa"
 
-	// Timeout for menu's
-	timeout = time.Second * 30
-
-	// errors
-	timeoutErr = errors.New("Error! Timed out wating for response!")
-	msgErr     = errors.New("Error! Could not send message!")
-
 	// four
 	scheme          = "https"
 	imgBaseURL      = "i.4cdn.org"
 	defualt4chanURL = "boards.4chan.org"
 	baseImageURL    = scheme + "://" + imgBaseURL
 )
-
-// initialize a new Box
-func NewBox(ctx *bot.Context) (*Box, error) {
-	if ctx == nil {
-		return nil, errors.New("Error! No client given!")
-	}
-
-	return &Box{Ctx: ctx}, nil
-}
-
-// store a model in a json file
-func (box *Box) StoreModel(path string, model interface{}) error {
-	jsonBytes, err := json.MarshalIndent(model, "", "	")
-	if err != nil {
-		return err
-	}
-
-	if err := ioutil.WriteFile(path, jsonBytes, 0777); err != nil {
-		return err
-
-	}
-
-	return nil
-}
-
-// get stored appointments from json file.
-// returns blank Appointments for simplicities
-// sake.
-func (box *Box) GetStoredModel(path string, model interface{}) error {
-	bytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	if err := json.Unmarshal(bytes, model); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// remove an appointment from []appointment
-func (box *Box) RemoveAppointment(s []Appointment, i int) []Appointment {
-	s[i] = s[len(s)-1]
-	return s[:len(s)-1]
-}
-
-// remove an rsvp from Appointments.Rsvp
-func (box *Box) RemoveRsvp(s []Rsvp, i int) []Rsvp {
-	s[i] = s[len(s)-1]
-	return s[:len(s)-1]
-}
-
-// helpful function to check if
-// an inputted date is valid
-func (box *Box) CheckDate(input string) error {
-	pDate := strings.Split(input, "/")
-	if len(pDate) == 2 {
-		_, firstErr := strconv.Atoi(pDate[0])
-		_, secondErr := strconv.Atoi(pDate[1])
-		if firstErr == nil || secondErr == nil {
-			return nil
-		}
-	}
-	if len(pDate) == 3 {
-		_, thirdErr := strconv.Atoi(pDate[2])
-		if thirdErr != nil {
-			return nil
-		}
-	}
-
-	return errors.New("Invalid date")
-}
-
-// helpful function to check if
-// an inputted time is valid
-func (box *Box) CheckTime(input string) error {
-	pTime := strings.Split(input, ":")
-	if len(pTime) == 2 {
-		_, firstErr := strconv.Atoi(pTime[0])
-		_, secondErr := strconv.Atoi(pTime[1])
-		if firstErr == nil || secondErr == nil {
-			return nil
-		}
-	}
-
-	return errors.New("Invalid time")
-}
 
 // turned []Appointment into an
 // string formatted to be a numbered
@@ -159,50 +61,6 @@ func (box *Box) NumRsvpList(prefix string, suffix string, resv []Rsvp) string {
 	builder.Write([]byte(suffix))
 
 	return builder.String()
-}
-
-// gives an array with ints referring
-// to, in order, the names of fields
-// from Appointment. Helpful for scripting.
-func (box *Box) GetApptSects() []string {
-	s := make([]string, 5)
-
-	s[0] = "Name"
-	s[1] = "Date"
-	s[2] = "Time"
-	s[3] = "Decs"
-	s[4] = "[]Rsvp"
-
-	return s
-}
-
-// Ask is a easy function to get user input
-// more than once in a function. Adds ability
-// for easy scripting and wizards.
-func (box *Box) Ask(m *gateway.MessageCreateEvent, inquire string) (string, error) {
-	_, err := box.Ctx.SendMessage(m.ChannelID, inquire, nil)
-	if err != nil {
-		return "", msgErr
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	v := box.Ctx.WaitFor(ctx, func(v interface{}) bool {
-		mg, ok := v.(*gateway.MessageCreateEvent)
-		if !ok {
-			return false
-		}
-
-		return mg.Author.ID == m.Author.ID
-	})
-
-	if v == nil {
-		return "", timeoutErr
-	}
-
-	resp := v.(*gateway.MessageCreateEvent)
-	return resp.Content, nil
 }
 
 // generate the help message
