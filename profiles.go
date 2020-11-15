@@ -18,8 +18,10 @@ var (
 	// get profiles
 	Profiles = boolbox.Profiles{}
 	_        = Box.GetStoredModel(proPath, &Profiles)
+)
 
-	/* Tags */
+/* Tags */
+var (
 	ButchBotCreator = discord.EmbedField{
 		Name:   "Butch Bot Creator",
 		Value:  "Created Butch Bot",
@@ -105,7 +107,7 @@ func (botStruct *Bot) Profile(m *gateway.MessageCreateEvent, input bot.RawArgume
 	if string(input) == "" {
 		for _, profile := range Profiles.Ps {
 			if profile.ID == m.Author.ID {
-				embed, err := Box.GenProfileEmbed(profile, TagMap)
+				embed, err := Box.ProfileToEmbed(profile, TagMap)
 				if err != nil {
 					return nil, err
 				}
@@ -117,7 +119,7 @@ func (botStruct *Bot) Profile(m *gateway.MessageCreateEvent, input bot.RawArgume
 		for _, profile := range Profiles.Ps {
 			for _, trigger := range profile.Triggers {
 				if string(input) == trigger {
-					embed, err := Box.GenProfileEmbed(profile, TagMap)
+					embed, err := Box.ProfileToEmbed(profile, TagMap)
 					if err != nil {
 						return nil, err
 					}

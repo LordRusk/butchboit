@@ -1,11 +1,14 @@
 # What is this?
 This is nothing more then a project for me to get good at golang.
 
-## What does the bot do
-Read the source code.
+## Goals
 
-## Whats up with butch?
-Currently, all previous sections have been fully reimplemented, especially the rsvp system, which is actually usable now. *four*, or the 4chan module had the least work put into it. I simply moved the post2Embed to boolbox, generalized it a bit, and left the rest of the code basically untouched. So its still as ugly and as not worky as it was before. Soon that will be taken care of as well. But I'm writing this a 0400, so ill sign off.
++ Pure Go: I want this bot to be pure go. Every package and library used must be pure go as well. No outsourcing things to the ffmpeg command, using `os/exec` to run youtube-dl. Currently we're *commiting treason* which is making this extremely diffucult.
+
++ Improvement in style: There is no style for this project, and for good reason. I'm using this project to force myself to learn/write lots of packages and learn how to interact with and understand a API, etc, which will show me a lot of different style. Right now I like diaonds though.
+
+## What does the bot do
+Butch has 4 post-testing modules, one alpha module. The 4 post-testing ones are: `basic` *the basic things* - help - prefix: `profile` *Get to know those in your server* - profile - profiles: `appoint` *Setup appointments* - newbool - removebool - rsvp - editbool - pickedup - bool - bools.
 
 #FQA - Frequently Questioned Answers
 

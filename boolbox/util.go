@@ -1,15 +1,12 @@
+// this is where butch keeps the rest of his tools.
 package boolbox
-
-// This file is where all utilities and
-// helper functions of boolbox call home.
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"strconv"
-	"strings"
+	"log"
 	"time"
 
 	"github.com/diamondburned/arikawa/bot"
@@ -17,22 +14,25 @@ import (
 	"github.com/diamondburned/arikawa/gateway"
 )
 
-var (
-	// Timeout for menu's
-	timeout = time.Second * 30
+// Timeout for menu's
+var timeout = time.Second * 30
 
-	// errors
-	timeoutErr = errors.New("Error! Timed out wating for response!")
-	msgErr     = errors.New("Error! Could not send message!")
-)
+// errors
+var timeoutErr = errors.New("Error! Timed out wating for response!")
+var msgErr = errors.New("Error! Could not send message!")
 
-// initialize a new Box
+type Box struct {
+	// context must not be embeded
+	Ctx       *bot.Context
+	BoomBoxes map[discord.GuildID]*BoomBox
+}
+
 func NewBox(ctx *bot.Context) (*Box, error) {
 	if ctx == nil {
 		return nil, errors.New("Error! No client given!")
 	}
 
-	return &Box{Ctx: ctx}, nil
+	return &Box{Ctx: ctx, BoomBoxes: make(map[discord.GuildID]*BoomBox)}, nil
 }
 
 // store a model in a json file
@@ -50,9 +50,7 @@ func (box *Box) StoreModel(path string, model interface{}) error {
 	return nil
 }
 
-// get stored appointments from json file.
-// returns blank Appointments for simplicities
-// sake.
+// get stored model from json file.
 func (box *Box) GetStoredModel(path string, model interface{}) error {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -66,73 +64,9 @@ func (box *Box) GetStoredModel(path string, model interface{}) error {
 	return nil
 }
 
-// remove an item from an array of interface{}
-func (box *Box) RemoveAppointment(s []Appointment, i int) []Appointment {
-	s[i] = s[len(s)-1]
-	return s[:len(s)-1]
-}
-
-// remove an item from an array of interface{}
-func (box *Box) RemoveRsvp(s []Rsvp, i int) []Rsvp {
-	s[i] = s[len(s)-1]
-	return s[:len(s)-1]
-}
-
-// helpful function to check if
-// an inputted date is valid
-func (box *Box) CheckDate(input string) error {
-	pDate := strings.Split(input, "/")
-	if len(pDate) == 2 {
-		_, firstErr := strconv.Atoi(pDate[0])
-		_, secondErr := strconv.Atoi(pDate[1])
-		if firstErr == nil || secondErr == nil {
-			return nil
-		}
-	}
-	if len(pDate) == 3 {
-		_, thirdErr := strconv.Atoi(pDate[2])
-		if thirdErr != nil {
-			return nil
-		}
-	}
-
-	return errors.New("Invalid date")
-}
-
-// helpful function to check if
-// an inputted time is valid
-func (box *Box) CheckTime(input string) error {
-	pTime := strings.Split(input, ":")
-	if len(pTime) == 2 {
-		_, firstErr := strconv.Atoi(pTime[0])
-		_, secondErr := strconv.Atoi(pTime[1])
-		if firstErr == nil || secondErr == nil {
-			return nil
-		}
-	}
-
-	return errors.New("Invalid time")
-}
-
-// gives an array with ints referring
-// to, in order, the names of fields
-// from Appointment. Helpful for scripting.
-func (box *Box) GetApptSects() []string {
-	s := make([]string, 5)
-
-	s[0] = "Name"
-	s[1] = "Date"
-	s[2] = "Time"
-	s[3] = "Decs"
-	s[4] = "[]Rsvp"
-
-	return s
-}
-
 // Ask is a easy function to get user input
 // more than once in a function. Adds ability
-// for easy scripting and wizards. Returns the
-// discord.MessageID's of all messages sent.
+// for easy scripting and wizards.
 func (box *Box) Ask(m *gateway.MessageCreateEvent, inquire string) (string, error) {
 	_, err := box.Ctx.SendMessage(m.ChannelID, inquire, nil)
 	if err != nil {
@@ -143,12 +77,19 @@ func (box *Box) Ask(m *gateway.MessageCreateEvent, inquire string) (string, erro
 	defer cancel()
 
 	v := box.Ctx.WaitFor(ctx, func(v interface{}) bool {
-		mg, ok := v.(*gateway.MessageCreateEvent)
-		if !ok {
-			return false
+		var pass bool
+		for pass == false {
+			mg, ok := v.(*gateway.MessageCreateEvent)
+			if !ok {
+				return false
+			}
+
+			if mg.ChannelID == m.ChannelID {
+				return mg.Author.ID == m.Author.ID
+			}
 		}
 
-		return mg.Author.ID == m.Author.ID
+		return false
 	})
 
 	if v == nil {
@@ -159,39 +100,28 @@ func (box *Box) Ask(m *gateway.MessageCreateEvent, inquire string) (string, erro
 	return resp.Content, nil
 }
 
-// extremely helpful function that, tracks
-// all new messages sent after initilization,
-// until it recieves a signal from uc, when it
-// does, it deletes all messages tracked. Useful
-// for interactive bot scripts to keep channels
-// from looking ugly with a bunch of leftover menus.
-func (box *Box) Track2Delete(m *gateway.MessageCreateEvent, uc chan int) error {
-	var pass bool
-	ic := make(chan discord.MessageID)
+// creates handler that logs all message id's. Returns
+// a function, when called, will delete all logged
+// messages and cancel's handler.
+func (box *Box) Track2Delete(targetID discord.ChannelID) func() {
+	uc := make(chan struct{})
 	mIDa := []discord.MessageID{}
 
-	go func() {
-		for pass == false {
-			for mID := range ic {
-				mIDa = append(mIDa, mID)
-			}
+	cancel := box.Ctx.AddHandler(func(c *gateway.MessageCreateEvent) {
+		if c.ChannelID == targetID {
+			mIDa = append(mIDa, c.ID)
 		}
-
-		close(ic)
-	}()
+	})
 
 	go func() {
 		_ = <-uc
-
-		pass = true
 		close(uc)
 
-		box.Ctx.DeleteMessages(m.ChannelID, mIDa)
+		cancel()
+		if err := box.Ctx.DeleteMessages(targetID, mIDa); err != nil {
+			log.Println(err)
+		}
 	}()
 
-	box.Ctx.AddHandler(func(m *gateway.MessageCreateEvent) {
-		ic <- m.ID
-	})
-
-	select {}
+	return func() { uc <- struct{}{} }
 }
