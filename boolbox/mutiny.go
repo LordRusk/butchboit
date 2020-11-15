@@ -6,9 +6,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/diamondburned/arikawa/discord"
-	"github.com/diamondburned/arikawa/state"
-	"github.com/diamondburned/arikawa/voice"
+	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v2/state"
+	"github.com/diamondburned/arikawa/v2/voice"
 	"github.com/jonas747/ogg"
 	"github.com/kkdai/youtube"
 )

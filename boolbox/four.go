@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/diamondburned/arikawa/discord"
+	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/lordrusk/godesu"
 	"jaytaylor.com/html2text"
 )

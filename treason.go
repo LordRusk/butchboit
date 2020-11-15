@@ -3,15 +3,16 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"os/signal"
 
-	// "github.com/diamondburned/arikawa/discord"
-	"github.com/diamondburned/arikawa/gateway"
-	// "github.com/diamondburned/arikawa/voice"
-	"github.com/diamondburned/arikawa/voice/voicegateway"
+	// "github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v2/gateway"
+	// "github.com/diamondburned/arikawa/v2/voice"
+	"github.com/diamondburned/arikawa/v2/voice/voicegateway"
 	"github.com/lordrusk/butchbot/boolbox"
 )
 
@@ -52,14 +53,21 @@ func (b *Bot) Join(m *gateway.MessageCreateEvent) (string, error) {
 		return "", NoTreason
 	}
 
-	vst, err := Box.Ctx.VoiceState(m.GuildID, m.Author.ID)
+	// fmt.Println's used for debugging
+	fmt.Println("0")
+
+	vst, err := b.Ctx.VoiceState(m.GuildID, m.Author.ID)
 	if err != nil {
 		return "", err
 	}
 
+	fmt.Println("1")
+
 	if vst.ChannelID == 0 {
 		return "", errors.New("Cannot auto join! User not in channel.")
 	}
+
+	fmt.Println("2")
 
 	ch, err := b.Ctx.Channel(m.ChannelID)
 	if err != nil {
@@ -67,11 +75,15 @@ func (b *Bot) Join(m *gateway.MessageCreateEvent) (string, error) {
 		return "", errors.New("failed to get channel")
 	}
 
+	fmt.Println("3")
+
 	voiceSession, err := boom.V.JoinChannel(ch.GuildID, ch.ID, false, true)
 	if err != nil {
 		log.Fatalln("failed to join channel:", err)
 		return "", errors.New("failed to join channel")
 	}
+
+	fmt.Println("4")
 
 	boom.VSesh = voiceSession
 
