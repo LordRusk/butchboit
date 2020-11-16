@@ -9,9 +9,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/diamondburned/arikawa/v2/bot"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/bot"
+	"github.com/diamondburned/arikawa/discord"
+	"github.com/diamondburned/arikawa/gateway"
+	// "github.com/diamondburned/arikawa/voice"
 )
 
 // Timeout for menu's
@@ -22,9 +23,8 @@ var timeoutErr = errors.New("Error! Timed out wating for response!")
 var msgErr = errors.New("Error! Could not send message!")
 
 type Box struct {
-	// context must not be embeded
-	Ctx       *bot.Context
-	BoomBoxes map[discord.GuildID]*BoomBox
+	// context left unexported. Always use bot.Ctx.
+	ctx *bot.Context
 }
 
 func NewBox(ctx *bot.Context) (*Box, error) {
@@ -32,7 +32,7 @@ func NewBox(ctx *bot.Context) (*Box, error) {
 		return nil, errors.New("Error! No client given!")
 	}
 
-	return &Box{Ctx: ctx, BoomBoxes: make(map[discord.GuildID]*BoomBox)}, nil
+	return &Box{ctx: ctx}, nil
 }
 
 // store a model in a json file
@@ -68,7 +68,7 @@ func (box *Box) GetStoredModel(path string, model interface{}) error {
 // more than once in a function. Adds ability
 // for easy scripting and wizards.
 func (box *Box) Ask(m *gateway.MessageCreateEvent, inquire string) (string, error) {
-	_, err := box.Ctx.SendMessage(m.ChannelID, inquire, nil)
+	_, err := box.ctx.SendMessage(m.ChannelID, inquire, nil)
 	if err != nil {
 		return "", msgErr
 	}
@@ -76,7 +76,7 @@ func (box *Box) Ask(m *gateway.MessageCreateEvent, inquire string) (string, erro
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	v := box.Ctx.WaitFor(ctx, func(v interface{}) bool {
+	v := box.ctx.WaitFor(ctx, func(v interface{}) bool {
 		var pass bool
 		for pass == false {
 			mg, ok := v.(*gateway.MessageCreateEvent)
@@ -107,7 +107,7 @@ func (box *Box) Track2Delete(targetID discord.ChannelID) func() {
 	uc := make(chan struct{})
 	mIDa := []discord.MessageID{}
 
-	cancel := box.Ctx.AddHandler(func(c *gateway.MessageCreateEvent) {
+	cancel := box.ctx.AddHandler(func(c *gateway.MessageCreateEvent) {
 		if c.ChannelID == targetID {
 			mIDa = append(mIDa, c.ID)
 		}
@@ -118,7 +118,7 @@ func (box *Box) Track2Delete(targetID discord.ChannelID) func() {
 		close(uc)
 
 		cancel()
-		if err := box.Ctx.DeleteMessages(targetID, mIDa); err != nil {
+		if err := box.ctx.DeleteMessages(targetID, mIDa); err != nil {
 			log.Println(err)
 		}
 	}()

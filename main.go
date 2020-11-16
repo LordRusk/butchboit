@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/diamondburned/arikawa/v2/bot"
+	"github.com/diamondburned/arikawa/bot"
 	"github.com/lordrusk/butchbot/boolbox"
 )
 

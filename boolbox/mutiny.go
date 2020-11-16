@@ -6,9 +6,10 @@ import (
 	"io"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/state"
-	"github.com/diamondburned/arikawa/v2/voice"
+	"github.com/diamondburned/arikawa/bot"
+	// "github.com/diamondburned/arikawa/discord"
+	// "github.com/diamondburned/arikawa/state"
+	"github.com/diamondburned/arikawa/voice"
 	"github.com/jonas747/ogg"
 	"github.com/kkdai/youtube"
 )
@@ -16,26 +17,16 @@ import (
 var InvalidLink = errors.New("Error! Invalid link. Please try another.")
 
 type BoomBox struct {
-	V      *voice.Voice
-	VSesh  *voice.Session
+	ctx *bot.Context
+	*voice.Voice
+	VS     *voice.Session
 	Cancel func()
 }
 
-func NewBoomBox(s *state.State) *BoomBox {
-	return &BoomBox{
-		V: voice.NewVoice(s),
-	}
+func (box *Box) NewBoomBox(ctx *bot.Context) *BoomBox {
+	return &BoomBox{ctx: ctx, Voice: voice.NewVoice(ctx.State)}
 }
 
-// attached to Box because of needed map.
-func (box *Box) CheckTreason(ID discord.GuildID) (boom *BoomBox, ok bool) {
-	boom, ok = box.BoomBoxes[ID]
-
-	return
-}
-
-// returns io.Reader of media, struct of media information,
-// and an error.
 func (boom *BoomBox) ParseLink(link string) (io.Reader, error) {
 	plink := strings.Split(link, "/")
 	if len(plink) != 4 {

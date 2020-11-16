@@ -3,15 +3,15 @@ This is nothing more then a project for me to get good at golang.
 
 ## Goals
 
-+ Pure Go: I want this bot to be pure go. Every package and library used must be pure go as well. No outsourcing things to the ffmpeg command, using `os/exec` to run youtube-dl. No. Pure go API and implementation. I hope to be able to run this bot completely off a 9front machine once I have my server up.
++ Pure Go: I want this bot to be pure go. Every package and library used must be pure go as well. No outsourcing things to the ffmpeg command, using `os/exec` to run youtube-dl. No. Pure go API and implementation. Treason is currently being committed against this goal.
 
-+ Improvement in style: There is no style for this project, and for good reason. I'm using this project to force myself to learn/write lots of packages and learn how to interact with and understand a API, etc, which will show me a lot of different style. Right now I like diaonds though.
++ Improvement in style: There is no style for this project, and for good reason. I'm using this project to force myself to learn/write lots of packages and learn how to interact with and understand a API, etc, which will show me a lot of different style. Right now I like diaond's though.
 
 ## What does the bot do
-Butch has 4 post-testing modules, one alpha module. The 4 post-testing ones are: `basic` *the basic things* - help - prefix: `profile` *Get to know those in your server* - profile - profiles: `appoint` *Setup appointments* - newbool - removebool - rsvp - editbool - pickedup - bool - bools.
+Butch has 4 post-testing modules, one alpha module. The 4 post-testing ones are: `basic` *the basic things* - help - prefix: `profile` *Get to know those in your server* - profile - profiles: `appoint` *Setup appointments* - newbool - removebool - rsvp - editbool - pickedup - bool - bools. - treason (*alpha*): read the source code.
 
 ## Whats up with butch?
-Current I'm developing `treason.go`. This is going to be butchbot's voice package, first step into the world of discord voice will be a pure go butchbot youtube streaming command. Like the generic music players, but pure go, and I have a few ideas for things I'd like to implement as well. I'm deciding whether to implement the framework for a music library system. Since discord takes opus, the files stored would be opus files, and I could sort them based on their tagging, add the ability for playlists, etc. First I just want to get voice working, which currently is not.
+The first version of `treason` that resembles what I want it to be, that also sorta works sometimes, can be found in `treason.go` and `boolbox.mutiny.go`. I have not found, and don't think I will find a pure go youtube downloader, and even if I did, if I wanted to be able to play from soundcloud, I would need to find the same thing. So I think I'm gonna buckle under the pressure of reality, and use youtube-dl. Now the reason for it being called treason isn't just a reference to an extremely obscure joke, but also because I'm committing treason against this projects goals.
 
 #FQA - Frequently Questioned Answers
 

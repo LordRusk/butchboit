@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/discord"
+	"github.com/diamondburned/arikawa/gateway"
 	"github.com/lordrusk/godesu"
 )
 
@@ -37,7 +37,7 @@ func (ir *IntRange) NextRandom(r *rand.Rand) int {
 }
 
 /* Bot commands */
-func (botStruct *Bot) Post(*gateway.MessageCreateEvent) (*discord.Embed, error) {
+func (b *Bot) Post(*gateway.MessageCreateEvent) (*discord.Embed, error) {
 	/* backend stuff */
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
@@ -85,7 +85,7 @@ func (botStruct *Bot) Post(*gateway.MessageCreateEvent) (*discord.Embed, error) 
 	return embed, nil
 }
 
-func (botStruct *Bot) Board(m *gateway.MessageCreateEvent, boardName string) (*discord.Embed, error) {
+func (b *Bot) Board(m *gateway.MessageCreateEvent, boardName string) (*discord.Embed, error) {
 	var pass bool
 
 	if boardName == "" {
@@ -139,7 +139,7 @@ func (botStruct *Bot) Board(m *gateway.MessageCreateEvent, boardName string) (*d
 	return embed, nil
 }
 
-// func (botStruct *Bot) Scope(m *gateway.MessageCreateEvent, boardName string, postInput int) (*discord.Embed, error) {
+// func (b *Bot) Scope(m *gateway.MessageCreateEvent, boardName string, postInput int) (*discord.Embed, error) {
 //        var selBoard = &godesu.ControlBoard{}
 //        var selThread godesu.Catalog.Thread
 //        var postNum int
@@ -196,7 +196,7 @@ func (botStruct *Bot) Board(m *gateway.MessageCreateEvent, boardName string) (*d
 //        return embed, nil
 // }
 
-func (botStruct *Bot) Boards(*gateway.MessageCreateEvent) (*discord.Embed, error) {
+func (b *Bot) Boards(*gateway.MessageCreateEvent) (*discord.Embed, error) {
 	/* godesu stuff */
 	_, boards := gochan.GetBoards()
 

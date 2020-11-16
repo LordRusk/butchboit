@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/discord"
 )
 
 // rsvp struct used to keep track

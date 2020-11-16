@@ -3,17 +3,27 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"os/signal"
 
-	// "github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
-	// "github.com/diamondburned/arikawa/v2/voice"
-	"github.com/diamondburned/arikawa/v2/voice/voicegateway"
+	// "github.com/diamondburned/arikawa/discord"
+	"github.com/diamondburned/arikawa/gateway"
+	// "github.com/diamondburned/arikawa/state"
+	// "github.com/diamondburned/arikawa/voice"
+	"github.com/diamondburned/arikawa/voice/voicegateway"
 	"github.com/lordrusk/butchbot/boolbox"
+)
+
+// Global boombox
+var BoomBox *boolbox.BoomBox
+
+var (
+	// checks
+	Active  bool
+	InChan  bool
+	Playing bool
 )
 
 var (
@@ -24,85 +34,70 @@ var (
 )
 
 func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
-	if _, ok := Box.CheckTreason(m.GuildID); ok {
+	if Active {
 		return "", YesTreason
 	}
 
-	boom := boolbox.NewBoomBox(b.Ctx.State)
-	Box.BoomBoxes[m.GuildID] = boom
+	BoomBox = Box.NewBoomBox(b.Ctx)
+	Active = true
 
 	return "Successfully commited treason in this channel. Use " + Prefix + "Play [link] to play a song", nil
 }
 
 func (b *Bot) Kill(m *gateway.MessageCreateEvent) (string, error) {
-	boom, ok := Box.CheckTreason(m.GuildID)
-	if !ok {
+	if !Active {
 		return "", NoTreason
 	}
 
-	// Box.BoomBoxes[m.GuildID].V.RemoveSession(m.GuildID)
-	boom.V.Close()
-	Box.BoomBoxes[m.GuildID] = nil
+	if err := BoomBox.Close(); err != nil {
+		return "", errors.New("Failed to close voice!")
+	}
+
+	BoomBox = nil
+	Active = false
 
 	return "Successfully killed current session", nil
 }
 
-func (b *Bot) Join(m *gateway.MessageCreateEvent) (string, error) {
-	boom, ok := Box.CheckTreason(m.GuildID)
-	if !ok {
-		return "", NoTreason
+func (b *Bot) Join(m *gateway.MessageCreateEvent) error {
+	if !Active {
+		return NoTreason
 	}
-
-	// fmt.Println's used for debugging
-	fmt.Println("0")
 
 	vst, err := b.Ctx.VoiceState(m.GuildID, m.Author.ID)
 	if err != nil {
-		return "", err
+		return errors.New("Cannot join channel! " + m.Author.Username + " not in channel")
 	}
 
-	fmt.Println("1")
-
-	if vst.ChannelID == 0 {
-		return "", errors.New("Cannot auto join! User not in channel.")
-	}
-
-	fmt.Println("2")
-
-	ch, err := b.Ctx.Channel(m.ChannelID)
+	vs, err := BoomBox.JoinChannel(m.GuildID, vst.ChannelID, false, true)
 	if err != nil {
-		log.Fatalln("failed to get channel:", err)
-		return "", errors.New("failed to get channel")
+		log.Fatal(err)
+		return errors.New("Cannot join channel!")
 	}
 
-	fmt.Println("3")
+	BoomBox.VS = vs
+	InChan = true
 
-	voiceSession, err := boom.V.JoinChannel(ch.GuildID, ch.ID, false, true)
-	if err != nil {
-		log.Fatalln("failed to join channel:", err)
-		return "", errors.New("failed to join channel")
-	}
-
-	fmt.Println("4")
-
-	boom.VSesh = voiceSession
-
-	return "Joined", nil
+	return nil
 }
 
-func (b *Bot) Play(m *gateway.MessageCreateEvent, link string) (string, error) {
-	boom, ok := Box.CheckTreason(m.GuildID)
-	if !ok {
-		return "", NoTreason
+func (b *Bot) Play(m *gateway.MessageCreateEvent, link string) error {
+	if !Active {
+		return NoTreason
 	}
 
-	media, err := boom.ParseLink(link)
+	if BoomBox.Cancel != nil {
+		BoomBox.Cancel()
+	}
+
+	media, err := BoomBox.ParseLink(link)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	BoomBox.Cancel = cancel
 
 	cmd := exec.CommandContext(ctx,
 		"ffmpeg",
@@ -112,35 +107,43 @@ func (b *Bot) Play(m *gateway.MessageCreateEvent, link string) (string, error) {
 		"-f", "opus", "-",
 	)
 
-	oggWriter := Box.NewOggWriter(boom.VSesh)
+	oggWriter := Box.NewOggWriter(BoomBox.VS)
 	defer oggWriter.Close()
-	Box.BoomBoxes[m.GuildID].Cancel = cancel
 
 	cmd.Stdin = media
 	cmd.Stdout = oggWriter
 	cmd.Stderr = os.Stderr
 
 	done := make(chan error)
-	sig := make(chan os.Signal)
-	signal.Notify(sig, os.Interrupt)
+	go func() { done <- cmd.Run() }()
 
 	// start speaking
-	if err := boom.VSesh.Speaking(voicegateway.Microphone); err != nil {
+	if err := BoomBox.VS.Speaking(voicegateway.Microphone); err != nil {
 		log.Fatalln("failed to send speaking:", err)
 	}
 
-	go func() { done <- cmd.Run() }()
+	sig := make(chan os.Signal)
+	signal.Notify(sig, os.Interrupt)
 
-	return "Playing", nil
-}
-
-func (b *Bot) Stop(m *gateway.MessageCreateEvent) (string, error) {
-	boom, ok := Box.CheckTreason(m.GuildID)
-	if !ok {
-		return "", NoTreason
+	// Block until either SIGINT is received OR ffmpeg is done.
+	select {
+	case <-sig:
+	case err = <-done:
 	}
 
-	boom.Cancel()
+	return nil
+}
 
-	return "Stopped", nil
+func (b *Bot) Stop(m *gateway.MessageCreateEvent) error {
+	if !Active {
+		return NoTreason
+	}
+
+	BoomBox.Cancel()
+
+	if err := BoomBox.VS.Speaking(voicegateway.SpeakingFlag(0)); err != nil {
+		log.Fatalln("failed to send stop speaking:", err)
+	}
+
+	return nil
 }

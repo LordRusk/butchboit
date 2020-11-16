@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v2/bot"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/bot"
+	"github.com/diamondburned/arikawa/discord"
+	"github.com/diamondburned/arikawa/gateway"
 	"github.com/lordrusk/butchbot/boolbox"
 )
 
@@ -103,7 +103,7 @@ var (
 	}
 )
 
-func (botStruct *Bot) Profile(m *gateway.MessageCreateEvent, input bot.RawArguments) (*discord.Embed, error) {
+func (b *Bot) Profile(m *gateway.MessageCreateEvent, input bot.RawArguments) (*discord.Embed, error) {
 	if string(input) == "" {
 		for _, profile := range Profiles.Ps {
 			if profile.ID == m.Author.ID {
@@ -133,7 +133,7 @@ func (botStruct *Bot) Profile(m *gateway.MessageCreateEvent, input bot.RawArgume
 	return nil, errors.New("Error! Profile not found. Please run `!profiles` for a list")
 }
 
-func (botStruct *Bot) Profiles(*gateway.MessageCreateEvent) (*discord.Embed, error) {
+func (b *Bot) Profiles(*gateway.MessageCreateEvent) (*discord.Embed, error) {
 	var desc strings.Builder
 
 	for _, profile := range Profiles.Ps {

@@ -1,0 +1,130 @@
+{
+	"name": {
+		"appoint": {
+			"name": "Appoint",
+			"cmdarr": [
+				{
+					"cmd": "newbool",
+					"args": [
+						{
+							"name": "Script"
+						}
+					],
+					"desc": "Create a new bool event"
+				},
+				{
+					"cmd": "removebool",
+					"args": [
+						{
+							"name": "Script"
+						}
+					],
+					"desc": "Remove a bool event"
+				},
+				{
+					"cmd": "editbool",
+					"args": [
+						{
+							"name": "Script"
+						}
+					],
+					"desc": "Edit a bool"
+				},
+				{
+					"cmd": "bool",
+					"args": [
+						{
+							"name": "Script"
+						}
+					],
+					"desc": "Show info for a bool event."
+				},
+				{
+					"cmd": "rsvp",
+					"args": [
+						{
+							"name": "Script"
+						}
+					],
+					"desc": "rsvp for a bool event."
+				},
+				{
+					"cmd": "bools",
+					"desc": "Shows currently active bool events."
+				}
+			]
+		},
+		"basic": {
+			"name": "Basic",
+			"cmdarr": [
+				{
+					"cmd": "help",
+					"desc": "Show's the help page"
+				},
+				{
+					"cmd": "prefix",
+					"args": [
+						{
+							"name": "New Prefix"
+						}
+					],
+					"desc": "Set a new prefix"
+				}
+			]
+		},
+		"four": {
+			"name": "Four",
+			"cmdarr": [
+				{
+					"cmd": "post",
+					"desc": "Get a random 4chan post"
+				},
+				{
+					"cmd": "board",
+					"args": [
+						{
+							"name": "A 4chan board"
+						}
+					],
+					"desc": "Get a random 4chan post from a specified board."
+				},
+				{
+					"cmd": "scope",
+					"args": [
+						{
+							"name": "4chan Board"
+						},
+						{
+							"name": "4chan Post No."
+						}
+					],
+					"desc": "Scope out a certain 4chan post.",
+					"State": 2
+				},
+				{
+					"cmd": "boards",
+					"desc": "Get a list of 4chan boards"
+				}
+			]
+		},
+		"profiles": {
+			"name": "Profiles",
+			"cmdarr": [
+				{
+					"cmd": "profile",
+					"args": [
+						{
+							"name": "User Profile",
+							"isoptional": true
+						}
+					],
+					"desc": "Show a profile from the list of `!profiles`"
+				},
+				{
+					"cmd": "profiles",
+					"desc": "Get a list of profiles"
+				}
+			]
+		}
+	}
+}

@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v2/bot"
-	"github.com/diamondburned/arikawa/v2/discord"
-	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/bot"
+	"github.com/diamondburned/arikawa/discord"
+	"github.com/diamondburned/arikawa/gateway"
 	"github.com/lordrusk/butchbot/boolbox"
 )
 
@@ -34,7 +34,7 @@ var apptNumOpts = "```\n[0] Name\n[1] Date\n[2] Time\n[3] Description\n[4] Rsvp'
 
 // great demonstrastion of the
 // Ask() function.
-func (botStruct *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
+func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 	var pass bool
 
 	dateInq := dateInqDef
@@ -100,7 +100,7 @@ func (botStruct *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 	return "New bool added! Check for a current list of bools with `" + Prefix + "bools`!", nil
 }
 
-func (botStruct *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArguments) (string, error) {
+func (b *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArguments) (string, error) {
 	var pass bool
 	var bwoolNum int
 	var builder strings.Builder
@@ -130,7 +130,7 @@ func (botStruct *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArg
 		}
 
 		if pass == false {
-			_, err := Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+			_, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
 			if err != nil {
 				return "", err
 			}
@@ -157,7 +157,7 @@ func (botStruct *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArg
 
 // another demonstration on
 // the usefullness of Ask()
-func (botStruct *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments) (string, error) {
+func (b *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments) (string, error) {
 	var bwoolNum int
 	var pass bool
 	var builder strings.Builder
@@ -188,7 +188,7 @@ func (botStruct *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments
 		}
 
 		if pass == false {
-			_, err := Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+			_, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
 			if err != nil {
 				return "", err
 			}
@@ -229,7 +229,7 @@ func (botStruct *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments
 	return "Successfully RSVP'd!", nil
 }
 
-func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
+func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 	var bwoolNum int
 	var rsvpNum int
 	var sectNum int
@@ -264,7 +264,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 		}
 
 		if pass == false {
-			_, err := Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+			_, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
 			if err != nil {
 				return "", err
 			}
@@ -284,7 +284,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 		}
 
 		if pass == false {
-			_, err := Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+			_, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
 			if err != nil {
 				return "", err
 			}
@@ -368,7 +368,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 		}
 
 		if pass == false {
-			_, err := Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+			_, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
 			if err != nil {
 				return "", err
 			}
@@ -393,7 +393,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 			}
 
 			if pass == false {
-				_, err := Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+				_, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
 				if err != nil {
 					return "", err
 				}
@@ -409,7 +409,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 				}
 
 				if err := Box.CheckTime(resp); err != nil {
-					_, err := Box.Ctx.SendMessage(m.ChannelID, "Invalid date! Try 7:30, 20:45, etc...", nil)
+					_, err := b.Ctx.SendMessage(m.ChannelID, "Invalid date! Try 7:30, 20:45, etc...", nil)
 					if err != nil {
 						return "", err
 					}
@@ -445,7 +445,7 @@ func (botStruct *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 	return "", errors.New("There should be no way you get this error...so good job!")
 }
 
-func (botStruct *Bot) Pickedup(m *gateway.MessageCreateEvent) (string, error) {
+func (b *Bot) Pickedup(m *gateway.MessageCreateEvent) (string, error) {
 	var bwoolNum int
 	var pass bool
 	var builder strings.Builder
@@ -475,7 +475,7 @@ func (botStruct *Bot) Pickedup(m *gateway.MessageCreateEvent) (string, error) {
 		}
 
 		if pass == false {
-			_, err := Box.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
+			_, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
 			if err != nil {
 				return "", err
 			}
@@ -500,7 +500,7 @@ func (botStruct *Bot) Pickedup(m *gateway.MessageCreateEvent) (string, error) {
 	return "Marked as picked up.", nil
 }
 
-func (botStruct *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
+func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 	var builder strings.Builder
 
 	builder.Write([]byte("```\n"))
@@ -550,7 +550,7 @@ func (botStruct *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error
 	return nil, errors.New("Bool does not exist, get a list with `" + Prefix + "bools`.")
 }
 
-func (botStruct *Bot) Bools(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
+func (b *Bot) Bools(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 	if len(Bools.Appts) == 0 {
 		return nil, errors.New("No bools currently active. Use `" + Prefix + "newbool` to add a new scheduled bool")
 	}
