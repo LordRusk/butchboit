@@ -97,7 +97,6 @@ func (b *Bot) Play(m *gateway.MessageCreateEvent, link string) error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	BoomBox.Cancel = cancel
 
 	cmd := exec.CommandContext(ctx,
 		"ffmpeg",
@@ -109,6 +108,7 @@ func (b *Bot) Play(m *gateway.MessageCreateEvent, link string) error {
 
 	oggWriter := Box.NewOggWriter(BoomBox.VS)
 	defer oggWriter.Close()
+	BoomBox.Cancel = func() { cancel(); oggWriter.Close() }
 
 	cmd.Stdin = media
 	cmd.Stdout = oggWriter
@@ -139,10 +139,12 @@ func (b *Bot) Stop(m *gateway.MessageCreateEvent) error {
 		return NoTreason
 	}
 
-	BoomBox.Cancel()
+	if BoomBox.Cancel != nil {
+		if err := BoomBox.VS.Speaking(voicegateway.SpeakingFlag(0)); err != nil {
+			log.Fatalln("failed to send stop speaking:", err)
+		}
 
-	if err := BoomBox.VS.Speaking(voicegateway.SpeakingFlag(0)); err != nil {
-		log.Fatalln("failed to send stop speaking:", err)
+		BoomBox.Cancel()
 	}
 
 	return nil
