@@ -22,18 +22,18 @@ var (
 	_     = Box.GetStoredModel(apptsPath, &Bools)
 
 	// inquires
-	dateInqDef = "Date?"
+	dateInqDef = "Date? (mm,dd,(yy))"
 	timeInqDef = "Start of pickup time?"
 	descInqDef = "Description?"
 	rsvpInqDef = "What is your estimated pickup time?"
 )
 
 // opts used for user-end menu's
+var apptNumOpts = "```\n[0] Name\n[1] Date\n[2] Time\n[3] Description\n[4] Rsvp's\n[5] Exit```"
 var rsvpNumOpts = "```\n[0] Edit Time\n[1] Delete rsvp\n[2] Exit```"
-var apptNumOpts = "```\n[0] Name\n[1] Date\n[2] Time\n[3] Description\n[4] Rsvp's```"
 
 // great demonstrastion of the
-// Ask() function.
+// Ask() function, 1.
 func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 	var pass bool
 
@@ -44,7 +44,7 @@ func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 	appointment := boolbox.Appointment{}
 
 	// get the name of the appointment
-	resp, err := Box.Ask(m, "Name?")
+	resp, err := Box.Ask(m, "Name?", 1)
 	if err != nil {
 		return "", err
 	}
@@ -55,13 +55,14 @@ func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 
 	// get the date of the appointment
 	for pass == false {
-		resp, err := Box.Ask(m, dateInq)
+		resp, err := Box.Ask(m, dateInq, 1)
 		if err != nil {
 			return "", err
 		}
 
-		if err := Box.CheckDate(resp); err == nil {
-			appointment.Date = resp
+		date, err := Box.CheckMakeDate(resp)
+		if err == nil {
+			appointment.Date = date
 			pass = true
 		}
 
@@ -71,13 +72,14 @@ func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 	// get the time of the appointment
 	pass = false
 	for pass == false {
-		resp, err := Box.Ask(m, timeInq)
+		resp, err := Box.Ask(m, timeInq, 1)
 		if err != nil {
 			return "", err
 		}
 
-		if err := Box.CheckTime(resp); err == nil {
-			appointment.Time = resp
+		time, err := Box.CheckMakeTime(resp)
+		if err == nil {
+			appointment.Time = time
 			pass = true
 		}
 
@@ -85,7 +87,7 @@ func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 	}
 
 	// get the description of the appointment
-	resp, err = Box.Ask(m, descInq)
+	resp, err = Box.Ask(m, descInq, 4)
 	if err != nil {
 		return "", err
 	}
@@ -116,7 +118,7 @@ func (b *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArguments) 
 	builder.Write([]byte("```"))
 
 	for pass == false {
-		resp, err := Box.Ask(m, builder.String())
+		resp, err := Box.Ask(m, builder.String(), 1)
 		if err != nil {
 			return "", err
 		}
@@ -138,7 +140,7 @@ func (b *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArguments) 
 
 	}
 
-	resp, err := Box.Ask(m, "Do you really want to remove that bool? [y/N]")
+	resp, err := Box.Ask(m, "Do you really want to remove that bool? [y/N]", 1)
 	if err != nil {
 		return "", nil
 	}
@@ -156,7 +158,7 @@ func (b *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArguments) 
 }
 
 // another demonstration on
-// the usefullness of Ask()
+// the usefullness of Ask(, 1)
 func (b *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments) (string, error) {
 	var bwoolNum int
 	var pass bool
@@ -174,7 +176,7 @@ func (b *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments) (strin
 	builder.Write([]byte("```"))
 
 	for pass == false {
-		resp, err := Box.Ask(m, builder.String())
+		resp, err := Box.Ask(m, builder.String(), 1)
 		if err != nil {
 			return "", err
 		}
@@ -207,13 +209,14 @@ func (b *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments) (strin
 
 	pass = false
 	for pass == false {
-		resp, err := Box.Ask(m, rsvpInq)
+		resp, err := Box.Ask(m, rsvpInq, 1)
 		if err != nil {
 			return "", err
 		}
 
-		if err := Box.CheckTime(resp); err == nil {
-			rsvp.PuTime = resp
+		time, err := Box.CheckMakeTime(resp)
+		if err == nil {
+			rsvp.PuTime = time
 			pass = true
 
 		}
@@ -221,9 +224,7 @@ func (b *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments) (strin
 		rsvpInq = "Invalid time! Try 7:30, 20:45, etc..."
 	}
 
-	rsvpInq = rsvpInqDef
 	Bools.Appts[bwoolNum].Resv = append(Bools.Appts[bwoolNum].Resv, rsvp)
-
 	Box.StoreModel(apptsPath, Bools)
 
 	return "Successfully RSVP'd!", nil
@@ -233,7 +234,6 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 	var bwoolNum int
 	var rsvpNum int
 	var sectNum int
-	var rsvpMenuNum int
 	var pass bool
 	var builder strings.Builder
 
@@ -248,7 +248,7 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 	builder.Write([]byte("```"))
 
 	for pass == false {
-		resp, err := Box.Ask(m, builder.String())
+		resp, err := Box.Ask(m, builder.String(), 1)
 		if err != nil {
 			return "", err
 		}
@@ -273,13 +273,13 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 
 	pass = false
 	for pass == false {
-		resp, err := Box.Ask(m, "Which part of the bool would you like to edit?\n"+apptNumOpts)
+		resp, err := Box.Ask(m, "Which part of the bool would you like to edit?\n"+apptNumOpts, 1)
 		if err != nil {
 			return "", nil
 		}
 
 		sectNum, _ = strconv.Atoi(resp)
-		if sectNum > 0 && sectNum < 4 {
+		if sectNum > 0 && sectNum <= 5 {
 			pass = true
 		}
 
@@ -291,8 +291,10 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 		}
 	}
 
-	if sectNum == 0 {
-		resp, err := Box.Ask(m, "What would you like to change the name to?")
+	if sectNum == 5 {
+		return "Exited.", nil
+	} else if sectNum == 0 {
+		resp, err := Box.Ask(m, "What would you like to change the name to?", 1)
 		if err != nil {
 			return "", err
 		}
@@ -301,33 +303,35 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 
 		return "Successfully changed bool name!", nil
 	} else if sectNum == 1 {
-		resp, err := Box.Ask(m, "What would you like to change the date to?")
+		resp, err := Box.Ask(m, "What would you like to change the date to?", 1)
 		if err != nil {
 			return "", err
 		}
 
-		if err := Box.CheckDate(resp); err != nil {
+		date, err := Box.CheckMakeDate(resp)
+		if err != nil {
 			return "", err
 		}
 
-		Bools.Appts[bwoolNum].Date = resp
+		Bools.Appts[bwoolNum].Date = date
 
 		return "Successfully changed bool date!", nil
 	} else if sectNum == 2 {
-		resp, err := Box.Ask(m, "What would you like to change the time to?")
+		resp, err := Box.Ask(m, "What would you like to change the time to?", 1)
 		if err != nil {
 			return "", err
 		}
 
-		if err := Box.CheckTime(resp); err != nil {
+		time, err := Box.CheckMakeTime(resp)
+		if err != nil {
 			return "", err
 		}
 
-		Bools.Appts[bwoolNum].Time = resp
+		Bools.Appts[bwoolNum].Time = time
 
 		return "Successfully changed bool time!", nil
 	} else if sectNum == 3 {
-		resp, err := Box.Ask(m, "What would you like to change the description to?")
+		resp, err := Box.Ask(m, "What would you like to change the description to?", 4)
 		if err != nil {
 			return "", err
 		}
@@ -354,7 +358,7 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 
 	pass = false
 	for pass == false {
-		resp, err := Box.Ask(m, builder.String())
+		resp, err := Box.Ask(m, builder.String(), 1)
 		if err != nil {
 			return "", err
 		}
@@ -377,18 +381,17 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 
 		pass = false
 		for pass == false {
-			resp, err := Box.Ask(m, "What would you like to do to the rsvp?\n"+rsvpNumOpts)
+			resp, err := Box.Ask(m, "What would you like to do to the rsvp?\n"+rsvpNumOpts, 1)
 			if err != nil {
 				return "", err
 			}
 
 			intResp, err := strconv.Atoi(resp)
-			if err == nil {
-				for i := 0; i < 3; i++ {
-					if i == intResp {
-						rsvpMenuNum = i
-						pass = true
-					}
+			if err != nil {
+				return "", err
+			} else {
+				if intResp >= 0 && intResp <= 2 {
+					pass = true
 				}
 			}
 
@@ -401,14 +404,17 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 		}
 
 		var passed bool
-		if rsvpMenuNum == 0 {
+		if intResp == 2 {
+			return "Exited", nil
+		} else if intResp == 0 {
 			for passed == false {
-				resp, err := Box.Ask(m, "What would you like the new pickup time be?")
+				resp, err := Box.Ask(m, "What would you like the new pickup time be?", 1)
 				if err != nil {
 					return "", err
 				}
 
-				if err := Box.CheckTime(resp); err != nil {
+				time, err := Box.CheckMakeTime(resp)
+				if err != nil {
 					_, err := b.Ctx.SendMessage(m.ChannelID, "Invalid date! Try 7:30, 20:45, etc...", nil)
 					if err != nil {
 						return "", err
@@ -418,13 +424,13 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 				}
 
 				if passed == true {
-					Bools.Appts[bwoolNum].Resv[rsvpNum].PuTime = resp
+					Bools.Appts[bwoolNum].Resv[rsvpNum].PuTime = time
 
 					return "Successfully changed rsvp time!", nil
 				}
 			}
-		} else if rsvpMenuNum == 1 {
-			resp, err := Box.Ask(m, "Are you sure you want to delete this rsvp? [y/N]")
+		} else if intResp == 1 {
+			resp, err := Box.Ask(m, "Are you sure you want to delete this rsvp? [y/N]", 1)
 			if err != nil {
 				return "", err
 			}
@@ -461,7 +467,7 @@ func (b *Bot) Pickedup(m *gateway.MessageCreateEvent) (string, error) {
 	builder.Write([]byte("```"))
 
 	for pass == false {
-		resp, err := Box.Ask(m, builder.String())
+		resp, err := Box.Ask(m, builder.String(), 1)
 		if err != nil {
 			return "", err
 		}
@@ -496,7 +502,7 @@ func (b *Bot) Pickedup(m *gateway.MessageCreateEvent) (string, error) {
 		return "", errors.New("Error! You have not rsvp'd!")
 	}
 
-	Bools.Appts[bwoolNum].Resv[rsvpNum].PuTime = "*Picked up*"
+	Bools.Appts[bwoolNum].Resv[rsvpNum].Pickedup = true
 	return "Marked as picked up.", nil
 }
 
@@ -513,7 +519,7 @@ func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 	}
 	builder.Write([]byte("```"))
 
-	resp, err := Box.Ask(m, builder.String())
+	resp, err := Box.Ask(m, builder.String(), 1)
 	if err != nil {
 		return nil, err
 	}
@@ -528,8 +534,13 @@ func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 					for _, rsvp := range bwool.Resv {
 						field := discord.EmbedField{
 							Name:   rsvp.User.Username,
-							Value:  "Pickup time: " + rsvp.PuTime,
 							Inline: true,
+						}
+
+						if rsvp.Pickedup == true {
+							field.Value = "*Picked Up*"
+						} else {
+							field.Value = "Pickup time: " + Box.BuildTime(rsvp.PuTime)
 						}
 
 						fields = append(fields, field)

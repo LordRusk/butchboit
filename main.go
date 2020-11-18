@@ -32,6 +32,13 @@ func main() {
 		ctx.HasPrefix = bot.NewPrefix(Prefix)
 		ctx.EditableCommands = true
 
+		// get boolbox
+		var err error
+		Box, err = boolbox.NewBox(commands.Ctx)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -39,12 +46,6 @@ func main() {
 	}
 
 	log.Println(BotName, "has started")
-
-	// get boolbox
-	Box, err = boolbox.NewBox(commands.Ctx)
-	if err != nil {
-		log.Fatalln(err)
-	}
 
 	if err := wait(); err != nil {
 		log.Fatalln("Gateway fetal error:", err)

@@ -125,6 +125,37 @@
 					"desc": "Get a list of profiles"
 				}
 			]
+		},
+		"treason": {
+			"name": "Treason",
+			"cmdarr": [
+				{
+					"cmd": "treason",
+					"desc": "Commit treason."
+				},
+				{
+					"cmd": "rebase",
+					"desc": "Rebase current treason session",
+					"State": 2
+				},
+				{
+					"cmd": "kill",
+					"desc": "Kill the current treason session"
+				},
+				{
+					"cmd": "play",
+					"args": [
+						{
+							"name": "Youtube Link"
+						}
+					],
+					"desc": "Play a song"
+				},
+				{
+					"cmd": "stop",
+					"desc": "Stop the current song"
+				}
+			]
 		}
 	}
 }

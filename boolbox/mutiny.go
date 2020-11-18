@@ -6,52 +6,33 @@ import (
 	"io"
 	"strings"
 
-	"github.com/diamondburned/arikawa/bot"
-	// "github.com/diamondburned/arikawa/discord"
-	// "github.com/diamondburned/arikawa/state"
 	"github.com/diamondburned/arikawa/voice"
 	"github.com/jonas747/ogg"
-	"github.com/kkdai/youtube"
 )
 
-var InvalidLink = errors.New("Error! Invalid link. Please try another.")
+var NonYoutubeLink = errors.New("Error! Not a youtube link!")
 
+// This struct is an abstraction, making it easier to
+// have multiple voices on different guilds.
 type BoomBox struct {
-	ctx *bot.Context
-	*voice.Voice
-	VS     *voice.Session
+	*voice.Session
 	Cancel func()
 }
 
-func (box *Box) NewBoomBox(ctx *bot.Context) *BoomBox {
-	return &BoomBox{ctx: ctx, Voice: voice.NewVoice(ctx.State)}
+func (box *Box) NewBoomBox(vs *voice.Session) *BoomBox {
+	return &BoomBox{Session: vs}
 }
 
-func (boom *BoomBox) ParseLink(link string) (io.Reader, error) {
-	plink := strings.Split(link, "/")
-	if len(plink) != 4 {
-		return nil, InvalidLink
+func (box *Box) IsLink(input string) bool {
+	plink := strings.Split(input, "/")
+
+	if plink[0] == "https:" || plink[0] == "http:" {
+		if plink[1] == "" {
+			return true
+		}
 	}
 
-	plink = strings.Split(plink[3], "=")
-	if len(plink) != 2 && len(plink) != 3 {
-		return nil, InvalidLink
-	}
-
-	videoID := plink[1]
-	client := youtube.Client{}
-
-	video, err := client.GetVideo(videoID)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := client.GetStream(video, &video.Formats[0])
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Body, nil
+	return false
 }
 
 // OggWriter is used to play sound through voice.

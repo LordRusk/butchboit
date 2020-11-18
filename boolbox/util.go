@@ -12,7 +12,7 @@ import (
 	"github.com/diamondburned/arikawa/bot"
 	"github.com/diamondburned/arikawa/discord"
 	"github.com/diamondburned/arikawa/gateway"
-	// "github.com/diamondburned/arikawa/voice"
+	"github.com/diamondburned/arikawa/voice"
 )
 
 // Timeout for menu's
@@ -24,7 +24,11 @@ var msgErr = errors.New("Error! Could not send message!")
 
 type Box struct {
 	// context left unexported. Always use bot.Ctx.
+	// context must not be embeded
 	ctx *bot.Context
+	*voice.Voice
+	*discord.User
+	BoomBoxes map[discord.GuildID]*BoomBox
 }
 
 func NewBox(ctx *bot.Context) (*Box, error) {
@@ -32,7 +36,12 @@ func NewBox(ctx *bot.Context) (*Box, error) {
 		return nil, errors.New("Error! No client given!")
 	}
 
-	return &Box{ctx: ctx}, nil
+	me, err := ctx.Me()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Box{Voice: voice.NewVoice(ctx.State), ctx: ctx, User: me, BoomBoxes: make(map[discord.GuildID]*BoomBox)}, nil
 }
 
 // store a model in a json file
@@ -42,7 +51,7 @@ func (box *Box) StoreModel(path string, model interface{}) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(path, jsonBytes, 0777); err != nil {
+	if err := ioutil.WriteFile(path, jsonBytes, 0666); err != nil {
 		return err
 
 	}
@@ -67,13 +76,17 @@ func (box *Box) GetStoredModel(path string, model interface{}) error {
 // Ask is a easy function to get user input
 // more than once in a function. Adds ability
 // for easy scripting and wizards.
-func (box *Box) Ask(m *gateway.MessageCreateEvent, inquire string) (string, error) {
+func (box *Box) Ask(m *gateway.MessageCreateEvent, inquire string, timeoutMulti time.Duration) (string, error) {
 	_, err := box.ctx.SendMessage(m.ChannelID, inquire, nil)
 	if err != nil {
 		return "", msgErr
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	if timeoutMulti <= 0 {
+		timeoutMulti = 1
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout*timeoutMulti)
 	defer cancel()
 
 	v := box.ctx.WaitFor(ctx, func(v interface{}) bool {
