@@ -37,7 +37,7 @@ func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
 	}
 
 	Box.BoomBoxes[m.GuildID] = Box.NewBoomBox(vs)
-	return "Successfully commited treason in this channel. Use `" + Prefix + "Play [link]` to play a song", nil
+	return "Successfully commited treason in this channel. Use `" + Prefix + "Play [Search term || link]` to play a song", nil
 }
 
 func (b *Bot) Kill(m *gateway.MessageCreateEvent) (string, error) {
@@ -68,54 +68,46 @@ func (b *Bot) Play(m *gateway.MessageCreateEvent, input bot.RawArguments) (strin
 		Box.BoomBoxes[m.GuildID].Cancel()
 	}
 
+	var id string
+	if Box.IsLink(string(input)) {
+		id = string(input)
+	} else {
+		var err error
+
+		id, err = Box.GetVideoID(string(input))
+		if err != nil {
+			return "", err
+		}
+	}
+
+	media, info, err := Box.GetVideo(id)
+	if err != nil {
+		return "", err
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var cmd *exec.Cmd
-	if isLink := Box.IsLink(string(input)); isLink {
-		cmd = exec.CommandContext(ctx,
-			"youtube-dl",
-			"-f", "250", "-o", "-",
-			"--audio-quality", "0",
-			"--external-downloader", "ffmpeg",
-			"--external-downloader-args", `
-        			-hide_banner -threads 1 -loglevel error
-        			-c:a copy -f opus -
-    			`,
-			string(input),
-		)
-
-	} else {
-		cmd = exec.CommandContext(ctx,
-			"youtube-dl",
-			"-f", "250", "-o", "-",
-			"--default-search", "ytsearch1:",
-			"--audio-quality", "0",
-			"--external-downloader", "ffmpeg",
-			"--external-downloader-args", `
-        			-hide_banner -threads 1 -loglevel error
-        			-c:a copy -f opus -
-    			`,
-			string(input),
-		)
-	}
-
-	// media, info, err := Box.GetVideo(id)
-	// if err != nil {
-	// 	return "", err
-	// }
+	cmd := exec.CommandContext(ctx,
+		"ffmpeg",
+		// Streaming is slow, so a single thread is all we need.
+		"-hide_banner", "-threads", "1", "-loglevel", "error",
+		"-i", "pipe:", "-filter:a", "volume=0.05", "-c:a", "libopus", "-b:a", "64k",
+		"-f", "opus", "-",
+	)
 
 	oggWriter := Box.NewOggWriter(Box.BoomBoxes[m.GuildID])
 	defer oggWriter.Close()
-	Box.BoomBoxes[m.GuildID].Cancel = func() { cancel(); oggWriter.Close() }
+	Box.BoomBoxes[m.GuildID].Cancel = func() { oggWriter.Close(); cancel() }
 
+	cmd.Stdin = media
 	cmd.Stdout = oggWriter
 	cmd.Stderr = os.Stderr
 
 	done := make(chan error)
 	go func() { done <- cmd.Run() }()
 
-	_, err := b.Ctx.SendMessage(m.ChannelID, "Playing", nil)
+	_, err = b.Ctx.SendMessage(m.ChannelID, "Playing `"+info.Title+"`", nil)
 	if err != nil {
 		return "", err
 	}
@@ -135,14 +127,16 @@ func (b *Bot) Play(m *gateway.MessageCreateEvent, input bot.RawArguments) (strin
 	}
 
 	if err != nil {
-		log.Println("youtube-dl or ffmpeg failed, exiting.")
+		log.Println("ffmpeg failed, exiting.")
 	}
 
-	if err := Box.BoomBoxes[m.GuildID].StopSpeaking(); err != nil {
-		log.Println("failed to stop speaking:", err)
+	if Box.BoomBoxes[m.GuildID].Cancel != nil {
+		if err := Box.BoomBoxes[m.GuildID].StopSpeaking(); err != nil {
+			log.Println("failed to stop speaking:", err)
+		}
 	}
 
-	return "Finished playing `", nil
+	return "Finished playing `" + info.Title + "`", nil
 }
 
 func (b *Bot) Stop(m *gateway.MessageCreateEvent) error {

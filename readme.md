@@ -8,10 +8,10 @@ This is nothing more then a project for me to get good at golang.
 + Improvement in style: There is no style for this project, and for good reason. I'm using this project to force myself to learn/write lots of packages and learn how to interact with and understand a API, etc, which will show me a lot of different style. Right now I like diaond's though.
 
 ## What does the bot do
-Butch has 4 post-testing modules, one alpha module. The 4 post-testing ones are: `basic` *the basic things* - help - prefix: `profile` *Get to know those in your server* - profile - profiles: `appoint` *Setup appointments* - newbool - removebool - rsvp - editbool - pickedup - bool - bools. - treason (*alpha*): read the source code.
+Butch has 4 post-testing modules, one alpha module. The 4 post-testing ones are: `basic` *the basic things* - help - prefix: `profile` *Get to know those in your server* - profile - profiles: `appoint` *Setup appointments* - newbool - removebool - rsvp - editbool - pickedup - bool - bools. - treason (*beta*): read the source code.
 
 ## Whats up with butch?
-The first version of `treason` that resembles what I want it to be, that also sorta works sometimes, can be found in `treason.go` and `boolbox.mutiny.go`. I have not found, and don't think I will find a pure go youtube downloader, and even if I did, if I wanted to be able to play from soundcloud, I would need to find the same thing. So I think I'm gonna buckle under the pressure of reality, and use youtube-dl. Now the reason for it being called treason isn't just a reference to an extremely obscure joke, but also because I'm committing treason against this projects goals.
+Pure go youtube searchs used for `treason.go` have been added, along with removing the `youtube-dl` dependency. The only external dependency is `ffmpeg`. Next it to implement a playlist system and queue system.
 
 #FQA - Frequently Questioned Answers
 

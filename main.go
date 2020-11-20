@@ -17,8 +17,7 @@ var (
 	token   = os.Getenv("BOT_TOKEN")
 	Prefix  = "!"
 	BotName = "ButchBot"
-
-	Box *boolbox.Box
+	Box     *boolbox.Box
 )
 
 func main() {
@@ -32,15 +31,14 @@ func main() {
 		ctx.HasPrefix = bot.NewPrefix(Prefix)
 		ctx.EditableCommands = true
 
-		// get boolbox
-		var err error
-		Box, err = boolbox.NewBox(commands.Ctx)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
 		return nil
 	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// get boolbox
+	Box, err = boolbox.NewBox(commands.Ctx)
 	if err != nil {
 		log.Fatalln(err)
 	}

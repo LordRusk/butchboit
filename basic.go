@@ -22,13 +22,11 @@ func (b *Bot) Help(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 		return nil, err
 	}
 
-	Box.StoreModel(helpPath, help)
-
 	return helpMsg, nil
 }
 
-func (b *Bot) Prefix(m *gateway.MessageCreateEvent, newPrefix string) (string, error) {
-	Prefix = newPrefix
+func (b *Bot) Prefix(m *gateway.MessageCreateEvent, input bot.RawArguments) (string, error) {
+	Prefix = string(input)
 	b.Ctx.HasPrefix = bot.NewPrefix(Prefix)
 
 	return "`" + Prefix + "` is the new prefix!", nil

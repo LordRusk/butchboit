@@ -2,15 +2,24 @@
 package boolbox
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
 	"io"
+	"log"
+	"net/http"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/diamondburned/arikawa/voice"
 	"github.com/jonas747/ogg"
+	"github.com/kkdai/youtube"
 )
 
 var NonYoutubeLink = errors.New("Error! Not a youtube link!")
+
+// base youtube search link
+var SearchBase = "https://www.youtube.com/results?search_query="
 
 // This struct is an abstraction, making it easier to
 // have multiple voices on different guilds.
@@ -23,6 +32,75 @@ func (box *Box) NewBoomBox(vs *voice.Session) *BoomBox {
 	return &BoomBox{Session: vs}
 }
 
+// a bufio split function that returns whats inbetween two
+// two quoutes as a token
+func scanQuotes(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	// Skip leading spaces.
+	start := 0
+	for width := 0; start < len(data); start += width {
+		var r rune
+		r, width = utf8.DecodeRune(data[start:])
+		if r != '"' {
+			break
+		}
+	}
+	// Scan until space, marking end of word.
+	for width, i := 0, start; i < len(data); i += width {
+		var r rune
+		r, width = utf8.DecodeRune(data[i:])
+		if r == '"' {
+			return i + width, data[start:i], nil
+		}
+	}
+	// If we're at EOF, we have a final, non-empty, non-terminated word. Return it.
+	if atEOF && len(data) > start {
+		return len(data), data[start:], nil
+	}
+	// Request more data.
+	return start, nil, nil
+}
+
+// Get the video ID from the top search result from youtube.
+func (box *Box) GetVideoID(sTerms string) (string, error) {
+	sTerms = strings.ReplaceAll(sTerms, " ", "+")
+
+	resp, err := http.Get(SearchBase + sTerms)
+	if err != nil {
+		log.Println(err)
+	}
+	defer resp.Body.Close()
+
+	scanner := bufio.NewScanner(resp.Body)
+	buf := make([]byte, 1024)
+	scanner.Buffer(buf, 512*1024)
+
+	jsonbytes := []byte{}
+	for scanner.Scan() {
+		if scanner.Text() == "// scraper_data_begin" {
+			scanner.Scan()
+			jsonbytes = scanner.Bytes()
+			break
+		}
+	}
+
+	scanner = bufio.NewScanner(bytes.NewReader(jsonbytes))
+	scanner.Split(scanQuotes)
+
+	var passes int
+	for scanner.Scan() {
+		if scanner.Text() == "videoId" {
+			passes++
+			if passes == 2 {
+				scanner.Scan()
+				scanner.Scan()
+				return scanner.Text(), nil
+			}
+		}
+	}
+
+	return "", errors.New("Error! Could not find video id")
+}
+
 func (box *Box) IsLink(input string) bool {
 	plink := strings.Split(input, "/")
 
@@ -33,6 +111,22 @@ func (box *Box) IsLink(input string) bool {
 	}
 
 	return false
+}
+
+func (box *Box) GetVideo(videoID string) (io.Reader, *youtube.Video, error) {
+	client := youtube.Client{}
+
+	video, err := client.GetVideo(videoID)
+	if err != nil {
+		return nil, &youtube.Video{}, err
+	}
+
+	resp, err := client.GetStream(video, &video.Formats[0])
+	if err != nil {
+		return nil, &youtube.Video{}, err
+	}
+
+	return resp.Body, video, nil
 }
 
 // OggWriter is used to play sound through voice.

@@ -33,7 +33,7 @@ var apptNumOpts = "```\n[0] Name\n[1] Date\n[2] Time\n[3] Description\n[4] Rsvp'
 var rsvpNumOpts = "```\n[0] Edit Time\n[1] Delete rsvp\n[2] Exit```"
 
 // great demonstrastion of the
-// Ask() function, 1.
+// Ask() function
 func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 	var pass bool
 
@@ -279,7 +279,7 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 		}
 
 		sectNum, _ = strconv.Atoi(resp)
-		if sectNum > 0 && sectNum <= 5 {
+		if sectNum >= 0 && sectNum <= 5 {
 			pass = true
 		}
 
@@ -363,7 +363,11 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 			return "", err
 		}
 
-		intResp, _ := strconv.Atoi(resp)
+		intResp, err := strconv.Atoi(resp)
+		if err != nil {
+			return "", err
+		}
+
 		for num, _ := range Bools.Appts[bwoolNum].Resv {
 			if num == intResp {
 				rsvpNum = num
@@ -507,6 +511,10 @@ func (b *Bot) Pickedup(m *gateway.MessageCreateEvent) (string, error) {
 }
 
 func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
+	if len(Bools.Appts) == 0 {
+		return nil, errors.New("No bools currently active. Use `" + Prefix + "newbool` to add a new scheduled bool")
+	}
+
 	var builder strings.Builder
 
 	builder.Write([]byte("```\n"))
@@ -558,7 +566,7 @@ func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 		}
 	}
 
-	return nil, errors.New("Bool does not exist, get a list with `" + Prefix + "bools`.")
+	return nil, errors.New("Choice out of range")
 }
 
 func (b *Bot) Bools(m *gateway.MessageCreateEvent) (*discord.Embed, error) {

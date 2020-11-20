@@ -134,11 +134,6 @@
 					"desc": "Commit treason."
 				},
 				{
-					"cmd": "rebase",
-					"desc": "Rebase current treason session",
-					"State": 2
-				},
-				{
 					"cmd": "kill",
 					"desc": "Kill the current treason session"
 				},
@@ -146,7 +141,7 @@
 					"cmd": "play",
 					"args": [
 						{
-							"name": "Youtube Link"
+							"name": "Song Name or Youtube Link"
 						}
 					],
 					"desc": "Play a song"
