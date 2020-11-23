@@ -13,7 +13,7 @@ import (
 
 	"github.com/diamondburned/arikawa/voice"
 	"github.com/jonas747/ogg"
-	"github.com/kkdai/youtube"
+	"github.com/kkdai/youtube/v2"
 )
 
 // Maximum queue length
