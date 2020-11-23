@@ -78,12 +78,8 @@ func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
 				log.Println("failed to send speaking:", err)
 			}
 
-			sig := make(chan os.Signal)
-			signal.Notify(sig, os.Interrupt)
-
 			// Block until either SIGINT is received OR ffmpeg is done.
 			select {
-			case <-sig:
 			case <-done:
 			}
 
