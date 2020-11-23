@@ -14,9 +14,10 @@ var InvalidDateError = errors.New("Invalid date!")
 var InvalidTimeError = errors.New("Invalid time!")
 
 type Date struct {
-	Day   int
-	Month time.Month
-	Year  int
+	Day   int        `json:"day,omitempty"`
+	Month time.Month `json:"month,omitempty"`
+	Year  int        `json:"year,omitempty"`
+	Ud    bool       `json:"undetermined,omitempty"` // whether the date is undetermined.
 }
 
 // rsvp struct used to keep track
@@ -27,10 +28,15 @@ type Rsvp struct {
 	Pickedup bool         `json:"picked_up,omitempty"`
 }
 
+type Time struct {
+	Time [2]int `json:"time,omitempty"`
+	Ud   bool   `json:"undetermined,omitempty"` // whether the time is undetermined
+}
+
 type Appointment struct {
 	Name string `json:"name,omitempty"`
 	Date Date   `json:"date,omitempty"`
-	Time [2]int `json:"time,omitempty"`
+	Time Time   `json:"time,omitempty"`
 	Desc string `json:"desc,omitempty"`
 	Resv []Rsvp `json:"resv,omitempty"`
 }
@@ -91,7 +97,7 @@ func (box *Box) CheckMakeDate(input string) (Date, error) {
 
 // check if a time is valid, and if it is, return
 // a corrently formatted time.
-func (box *Box) CheckMakeTime(input string) ([2]int, error) {
+func (box *Box) CheckMakeTime(input string) (Time, error) {
 	time := [2]int{}
 
 	pTime := strings.Split(input, ":")
@@ -99,24 +105,32 @@ func (box *Box) CheckMakeTime(input string) ([2]int, error) {
 		tp1, err1 := strconv.Atoi(pTime[0])
 		tp2, err2 := strconv.Atoi(pTime[1])
 		if err1 != nil || err2 != nil {
-			return time, InvalidTimeError
+			return Time{}, InvalidTimeError
 		}
 
 		time[0] = tp1
 		time[1] = tp2
 
-		return time, nil
+		return Time{Time: time}, nil
 	}
 
-	return time, InvalidTimeError
+	return Time{}, InvalidTimeError
 }
 
 func (box *Box) BuildDate(date Date) string {
+	if date.Ud {
+		return "n/a"
+	}
+
 	return date.Month.String() + " " + strconv.Itoa(date.Day) + ", " + strconv.Itoa(date.Year)
 }
 
-func (box *Box) BuildTime(time [2]int) string {
-	return strconv.Itoa(time[0]) + ":" + strconv.Itoa(time[1])
+func (box *Box) BuildTime(time Time) string {
+	if time.Ud {
+		return "n/a"
+	}
+
+	return strconv.Itoa(time.Time[0]) + ":" + strconv.Itoa(time.Time[1])
 }
 
 // build appointment description

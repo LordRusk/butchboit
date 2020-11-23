@@ -60,6 +60,12 @@ func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 			return "", err
 		}
 
+		sResp := strings.Split(resp, "/")
+		if (sResp[0] == "n" || sResp[0] == "N") && (sResp[1] == "a" || sResp[1] == "A") {
+			appointment.Date.Ud = true
+			break
+		}
+
 		date, err := Box.CheckMakeDate(resp)
 		if err == nil {
 			appointment.Date = date
@@ -75,6 +81,12 @@ func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 		resp, err := Box.Ask(m, timeInq, 1)
 		if err != nil {
 			return "", err
+		}
+
+		sResp := strings.Split(resp, "/")
+		if (sResp[0] == "n" || sResp[0] == "N") && (sResp[1] == "a" || sResp[1] == "A") {
+			appointment.Time.Ud = true
+			break
 		}
 
 		time, err := Box.CheckMakeTime(resp)
@@ -216,7 +228,7 @@ func (b *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments) (strin
 
 		time, err := Box.CheckMakeTime(resp)
 		if err == nil {
-			rsvp.PuTime = time
+			rsvp.PuTime = time.Time
 			pass = true
 
 		}
@@ -428,7 +440,7 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 				}
 
 				if passed == true {
-					Bools.Appts[bwoolNum].Resv[rsvpNum].PuTime = time
+					Bools.Appts[bwoolNum].Resv[rsvpNum].PuTime = time.Time
 
 					return "Successfully changed rsvp time!", nil
 				}
@@ -548,7 +560,7 @@ func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 						if rsvp.Pickedup == true {
 							field.Value = "*Picked Up*"
 						} else {
-							field.Value = "Pickup time: " + Box.BuildTime(rsvp.PuTime)
+							field.Value = "Pickup time: " + Box.BuildTime(boolbox.Time{Time: rsvp.PuTime})
 						}
 
 						fields = append(fields, field)
