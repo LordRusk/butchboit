@@ -121,16 +121,5 @@ func (box *Box) BuildTime(time [2]int) string {
 
 // build appointment description
 func (box *Box) BuildApptDesc(appointment Appointment) string {
-	var desc strings.Builder
-
-	desc.WriteString("**Time: ")
-	desc.WriteString(box.BuildTime(appointment.Time))
-	desc.WriteString("\nDate: ")
-	desc.WriteString(box.BuildDate(appointment.Date))
-	desc.WriteString("**\n")
-	desc.WriteString(HelpDivider)
-	desc.WriteString(appointment.Desc)
-	desc.WriteString("\n")
-
-	return desc.String()
+	return "**Time: " + box.BuildTime(appointment.Time) + "\nDate: " + box.BuildDate(appointment.Date) + "**\n" + HelpDivider + appointment.Desc + "\n"
 }

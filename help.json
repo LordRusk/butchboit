@@ -144,11 +144,15 @@
 							"name": "Song Name or Youtube Link"
 						}
 					],
-					"desc": "Play a song"
+					"desc": "Play or add a song to the queue"
 				},
 				{
-					"cmd": "stop",
-					"desc": "Stop the current song"
+					"cmd": "skip",
+					"desc": "Skip the current song"
+				},
+				{
+					"cmd": "queue",
+					"desc": "List all songs in current queue"
 				}
 			]
 		}

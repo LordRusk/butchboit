@@ -3,7 +3,6 @@ package boolbox
 
 import (
 	"strconv"
-	"strings"
 
 	"github.com/diamondburned/arikawa/discord"
 )
@@ -27,14 +26,6 @@ type Profiles struct {
 
 // Turns a Profile into a discord.Embed.
 func (box *Box) ProfileToEmbed(profile Profile, tagMap map[string]discord.EmbedField) (*discord.Embed, error) {
-	/* title */
-	var title strings.Builder
-	title.WriteString("Bool profile for ")
-	title.WriteString(profile.Name)
-	title.WriteString(" (AKA: ")
-	title.WriteString(profile.Nickname)
-	title.WriteString(")")
-
 	/* color */
 	colorHex, err := strconv.ParseInt((profile.Color)[1:], 16, 64)
 	if err != nil {
@@ -52,7 +43,7 @@ func (box *Box) ProfileToEmbed(profile Profile, tagMap map[string]discord.EmbedF
 
 	/* make the embed */
 	embed := discord.Embed{
-		Title:       title.String(),
+		Title:       "Bool profile for " + profile.Name + " (AKA: " + profile.Nickname + ")",
 		Description: profile.Info,
 		Color:       discord.Color(colorHex),
 		Fields:      fields,

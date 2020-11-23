@@ -39,7 +39,7 @@ func (ir *IntRange) NextRandom(r *rand.Rand) int {
 /* Bot commands */
 func (b *Bot) Post(*gateway.MessageCreateEvent) (*discord.Embed, error) {
 	/* backend stuff */
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r := rand.New(rand.NewSource(time.Now().UnixNano() ^ 13/2))
 
 	/* get a random board */
 	boardMap := make(map[int]string)
@@ -93,7 +93,7 @@ func (b *Bot) Board(m *gateway.MessageCreateEvent, boardName string) (*discord.E
 	}
 
 	/* backend stuff */
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r := rand.New(rand.NewSource(time.Now().UnixNano() ^ 13/2))
 
 	for _, board := range boards.All {
 		if boardName == board.Board {

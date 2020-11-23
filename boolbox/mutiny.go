@@ -16,26 +16,46 @@ import (
 	"github.com/kkdai/youtube"
 )
 
+// Maximum queue length
+const MaxQueueLength = 512
+
 var NonYoutubeLink = errors.New("Error! Not a youtube link!")
 
 // base youtube search link
-var SearchBase = "https://www.youtube.com/results?search_query="
+var (
+	base        = "www.youtube.com"
+	search      = "results?search_query="
+	YtSearchURL = scheme + "://" + base + "/" + search
+)
+
+// Global youtube client
+var uClient = youtube.Client{}
+
+// struct to handle media
+type Media struct {
+	Stream io.Reader
+	Info   *youtube.Video
+}
 
 // This struct is an abstraction, making it easier to
 // have multiple voices on different guilds.
 type BoomBox struct {
 	*voice.Session
+	Player chan Media
 	Cancel func()
+
+	// only used to show songs in queue
+	Queue []string
 }
 
 func (box *Box) NewBoomBox(vs *voice.Session) *BoomBox {
-	return &BoomBox{Session: vs}
+	return &BoomBox{Session: vs, Player: make(chan Media, MaxQueueLength)}
 }
 
 // a bufio split function that returns whats inbetween two
 // two quoutes as a token
 func scanQuotes(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	// Skip leading spaces.
+	// Skip leading qoutes.
 	start := 0
 	for width := 0; start < len(data); start += width {
 		var r rune
@@ -44,7 +64,7 @@ func scanQuotes(data []byte, atEOF bool) (advance int, token []byte, err error) 
 			break
 		}
 	}
-	// Scan until space, marking end of word.
+	// Scan until qoutes, marking end of word.
 	for width, i := 0, start; i < len(data); i += width {
 		var r rune
 		r, width = utf8.DecodeRune(data[i:])
@@ -64,7 +84,7 @@ func scanQuotes(data []byte, atEOF bool) (advance int, token []byte, err error) 
 func (box *Box) GetVideoID(sTerms string) (string, error) {
 	sTerms = strings.ReplaceAll(sTerms, " ", "+")
 
-	resp, err := http.Get(SearchBase + sTerms)
+	resp, err := http.Get(YtSearchURL + sTerms)
 	if err != nil {
 		log.Println(err)
 	}
@@ -113,20 +133,18 @@ func (box *Box) IsLink(input string) bool {
 	return false
 }
 
-func (box *Box) GetVideo(videoID string) (io.Reader, *youtube.Video, error) {
-	client := youtube.Client{}
-
-	video, err := client.GetVideo(videoID)
+func (box *Box) GetVideo(videoID string) (Media, error) {
+	video, err := uClient.GetVideo(videoID)
 	if err != nil {
-		return nil, &youtube.Video{}, err
+		return Media{}, err
 	}
 
-	resp, err := client.GetStream(video, &video.Formats[0])
+	resp, err := uClient.GetStream(video, &video.Formats[0])
 	if err != nil {
-		return nil, &youtube.Video{}, err
+		return Media{}, err
 	}
 
-	return resp.Body, video, nil
+	return Media{Stream: resp.Body, Info: video}, nil
 }
 
 // OggWriter is used to play sound through voice.

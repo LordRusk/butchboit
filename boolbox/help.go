@@ -49,37 +49,26 @@ func (box *Box) GenHelpMsg(prefix string, botName string, cmdGroupMap map[string
 	var helpMsg strings.Builder
 
 	helpMsg.WriteString(HelpDivider)
-	helpMsg.WriteString("**Prefix:**  `")
-	helpMsg.WriteString(prefix)
-	helpMsg.WriteString("`\n")
-	helpMsg.WriteString(HelpDivider)
-	helpMsg.WriteString("**Commands**\n")
+	helpMsg.WriteString("**Prefix:**  `" + prefix + "`\n" + HelpDivider + "**Commands**\n")
 	helpMsg.WriteString(HelpDivider)
 
 	for _, cmdGroup := range cmdGroupMap {
-		helpMsg.WriteString("***")
-		helpMsg.WriteString(cmdGroup.Name)
-		helpMsg.WriteString(" Commands:***\n")
+		helpMsg.WriteString("***" + cmdGroup.Name + " Commands:***\n")
 		for _, cmdInfo := range cmdGroup.CmdArr {
 			if cmdInfo.State == 1 {
 				helpMsg.WriteString("__[ Work In Progress ]__ ")
 			} else if cmdInfo.State == 2 {
 				helpMsg.WriteString("~~")
 			}
-			helpMsg.WriteString("**")
-			helpMsg.WriteString(cmdInfo.Cmd)
-			helpMsg.WriteString("**")
+			helpMsg.WriteString("**" + cmdInfo.Cmd + "**")
 			for i := 0; i < len(cmdInfo.Args); i++ {
 				helpMsg.WriteString(" [ ")
 				if cmdInfo.Args[i].IsOptional == true {
 					helpMsg.WriteString("*Optional* ")
 				}
-				helpMsg.WriteString(cmdInfo.Args[i].Name)
-				helpMsg.WriteString(" ]")
+				helpMsg.WriteString(cmdInfo.Args[i].Name + " ]")
 			}
-			helpMsg.WriteString(" -- *")
-			helpMsg.WriteString(cmdInfo.Desc)
-			helpMsg.WriteString("*")
+			helpMsg.WriteString(" -- *" + cmdInfo.Desc + "*")
 			if cmdInfo.State == 2 {
 				helpMsg.WriteString("~~")
 			}

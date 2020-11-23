@@ -26,49 +26,36 @@ func (box *Box) FourToEmbed(color string, thread godesu.Thread, postNum int) (*d
 
 	var title strings.Builder
 
-	title.WriteString("Board: ")
-	title.WriteString(thread.Board)
-	title.WriteString("\n")
-
+	title.WriteString("Board: " + thread.Board + "\n")
 	if posts[0].No != post.No {
-		title.WriteString("Thread No. `")
-		title.WriteString(strconv.FormatInt(int64(posts[0].No), 10))
-		title.WriteString("`\n")
+		title.WriteString("Thread No. `" + strconv.FormatInt(int64(posts[0].No), 10) + "`\n")
 		if posts[0].Sub != "" {
 			origPostSub, err := html2text.FromString(posts[0].Sub, html2text.Options{PrettyTables: true})
 			if err != nil {
 				return nil, err
 			}
 
-			title.WriteString("Thread: ")
-			title.WriteString(origPostSub)
-			title.WriteString("\n")
+			title.WriteString("Thread: " + origPostSub + "\n")
 		}
 	}
 
 	title.WriteString(HelpDivider)
 
-	title.WriteString("Post No. `")
-	title.WriteString(strconv.FormatInt(int64(post.No), 10))
-	title.WriteString("`\n")
+	title.WriteString("Post No. `" + strconv.FormatInt(int64(post.No), 10) + "`\n")
 
 	name, err := html2text.FromString(post.Name, html2text.Options{PrettyTables: true})
 	if err != nil {
 		return nil, err
 	}
 
-	title.WriteString("Name: ")
-	title.WriteString(name)
-	title.WriteString("\n")
+	title.WriteString("Name: " + name + "\n")
 	if post.Sub != "" {
 		sub, err := html2text.FromString(post.Sub, html2text.Options{PrettyTables: true})
 		if err != nil {
 			return nil, err
 		}
 
-		title.WriteString("Subject: ")
-		title.WriteString(sub)
-		title.WriteString("\n")
+		title.WriteString("Subject: " + sub + "\n")
 	}
 
 	/* get the description */
