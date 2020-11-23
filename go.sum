@@ -110,8 +110,6 @@ github.com/jtolds/gls v4.20.0+incompatible/go.mod h1:QJZ7F/aHp+rZTRtaJ1ow/lLfFfV
 github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
-github.com/kkdai/youtube v1.2.4 h1:LyuoTd268oRvd2uqNB6XmQx3HiIdLuLDGZ7oo22hRcI=
-github.com/kkdai/youtube v1.2.4/go.mod h1:FEo9+PUI1UcsTZGl1TmPKlErKhRoJmD3mvqSs7AdC2g=
 github.com/kkdai/youtube/v2 v2.2.1 h1:i5A/dGeNe0Oo055AnLpP2V+9isgRJFAUYMMx8PIv2Bg=
 github.com/kkdai/youtube/v2 v2.2.1/go.mod h1:61FfODSvBAKWzaRobNneXgVG8ywjIh3vcFKZYz5zoTA=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
