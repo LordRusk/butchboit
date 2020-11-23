@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"os/signal"
 	"strconv"
 	"strings"
 
@@ -65,9 +64,6 @@ func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
 			cmd.Stdout = oggWriter
 			cmd.Stderr = os.Stderr
 
-			done := make(chan error)
-			go func() { done <- cmd.Run() }()
-
 			_, err = b.Ctx.SendMessage(m.ChannelID, "Playing `"+media.Info.Title+"`", nil)
 			if err != nil {
 				log.Println(err)
@@ -78,9 +74,8 @@ func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
 				log.Println("failed to send speaking:", err)
 			}
 
-			// Block until either SIGINT is received OR ffmpeg is done.
-			select {
-			case <-done:
+			if err := cmd.Run(); err != nil {
+				log.Println(err)
 			}
 
 			if Box.BoomBoxes[m.GuildID] != nil {
