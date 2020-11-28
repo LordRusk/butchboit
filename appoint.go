@@ -35,6 +35,10 @@ var rsvpNumOpts = "```\n[0] Edit Time\n[1] Delete rsvp\n[2] Exit```"
 // great demonstrastion of the
 // Ask() function
 func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
+	// cleanup
+	del := Box.Track2Delete(m.ChannelID)
+	defer del()
+
 	var pass bool
 
 	dateInq := dateInqDef
@@ -115,6 +119,10 @@ func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 }
 
 func (b *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArguments) (string, error) {
+	// cleanup
+	del := Box.Track2Delete(m.ChannelID)
+	defer del()
+
 	var pass bool
 	var bwoolNum int
 	var builder strings.Builder
@@ -172,6 +180,10 @@ func (b *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArguments) 
 // another demonstration on
 // the usefullness of Ask(, 1)
 func (b *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments) (string, error) {
+	// cleanup
+	del := Box.Track2Delete(m.ChannelID)
+	defer del()
+
 	var bwoolNum int
 	var pass bool
 	var builder strings.Builder
@@ -228,7 +240,7 @@ func (b *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments) (strin
 
 		time, err := Box.CheckMakeTime(resp)
 		if err == nil {
-			rsvp.PuTime = time.Time
+			rsvp.Time = time
 			pass = true
 
 		}
@@ -243,6 +255,10 @@ func (b *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments) (strin
 }
 
 func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
+	// cleanup
+	del := Box.Track2Delete(m.ChannelID)
+	defer del()
+
 	var bwoolNum int
 	var rsvpNum int
 	var sectNum int
@@ -320,6 +336,12 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 			return "", err
 		}
 
+		sResp := strings.Split(resp, "/")
+		if (sResp[0] == "n" || sResp[0] == "N") && (sResp[1] == "a" || sResp[1] == "A") {
+			Bools.Appts[bwoolNum].Date.Ud = true
+			return "Successfully changed bool date!", nil
+		}
+
 		date, err := Box.CheckMakeDate(resp)
 		if err != nil {
 			return "", err
@@ -334,13 +356,18 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 			return "", err
 		}
 
+		sResp := strings.Split(resp, "/")
+		if (sResp[0] == "n" || sResp[0] == "N") && (sResp[1] == "a" || sResp[1] == "A") {
+			Bools.Appts[bwoolNum].Date.Ud = true
+			return "Successfully changed bool time!", nil
+		}
+
 		time, err := Box.CheckMakeTime(resp)
 		if err != nil {
 			return "", err
 		}
 
 		Bools.Appts[bwoolNum].Time = time
-
 		return "Successfully changed bool time!", nil
 	} else if sectNum == 3 {
 		resp, err := Box.Ask(m, "What would you like to change the description to?", 4)
@@ -435,12 +462,12 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 					if err != nil {
 						return "", err
 					}
-				} else {
-					passed = true
 				}
 
+				return "Successfully changed bool name!", nil
+
 				if passed == true {
-					Bools.Appts[bwoolNum].Resv[rsvpNum].PuTime = time.Time
+					Bools.Appts[bwoolNum].Resv[rsvpNum].Time = time
 
 					return "Successfully changed rsvp time!", nil
 				}
@@ -468,6 +495,10 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 }
 
 func (b *Bot) Pickedup(m *gateway.MessageCreateEvent) (string, error) {
+	// cleanup
+	del := Box.Track2Delete(m.ChannelID)
+	defer del()
+
 	var bwoolNum int
 	var pass bool
 	var builder strings.Builder
@@ -523,6 +554,10 @@ func (b *Bot) Pickedup(m *gateway.MessageCreateEvent) (string, error) {
 }
 
 func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
+	// cleanup
+	del := Box.Track2Delete(m.ChannelID)
+	defer del()
+
 	if len(Bools.Appts) == 0 {
 		return nil, errors.New("No bools currently active. Use `" + Prefix + "newbool` to add a new scheduled bool")
 	}
@@ -560,7 +595,7 @@ func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 						if rsvp.Pickedup == true {
 							field.Value = "*Picked Up*"
 						} else {
-							field.Value = "Pickup time: " + Box.BuildTime(boolbox.Time{Time: rsvp.PuTime})
+							field.Value = "Pickup time: " + Box.BuildTime(&boolbox.Time{Time: rsvp.Time.Time})
 						}
 
 						fields = append(fields, field)
@@ -582,6 +617,10 @@ func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 }
 
 func (b *Bot) Bools(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
+	// cleanup
+	del := Box.Track2Delete(m.ChannelID)
+	defer del()
+
 	if len(Bools.Appts) == 0 {
 		return nil, errors.New("No bools currently active. Use `" + Prefix + "newbool` to add a new scheduled bool")
 	}

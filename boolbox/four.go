@@ -58,24 +58,23 @@ func (box *Box) FourToEmbed(color string, thread godesu.Thread, postNum int) (*d
 		title.WriteString("Subject: " + sub + "\n")
 	}
 
-	/* get the description */
 	description, err := html2text.FromString(post.Com, html2text.Options{PrettyTables: true})
 	if err != nil {
 		return nil, err
 	}
 
-	/* color */
+	// color
 	colorHex, err := strconv.ParseInt((color)[1:], 16, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	/* get the image */
+	// get the image
 	image := discord.EmbedImage{
 		URL: string(baseImageURL + "/" + thread.Board + "/" + strconv.FormatInt(post.Tim, 10) + post.Ext),
 	}
 
-	/* get the thread URL */
+	// get the thread URL
 	fields := []discord.EmbedField{
 		discord.EmbedField{
 			Name:   "Thread URL",

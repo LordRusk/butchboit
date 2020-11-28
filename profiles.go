@@ -20,8 +20,8 @@ var (
 	_        = Box.GetStoredModel(proPath, &Profiles)
 )
 
-/* Tags */
 var (
+	// Tags
 	ButchBotCreator = discord.EmbedField{
 		Name:   "Butch Bot Creator",
 		Value:  "Created Butch Bot",

@@ -64,7 +64,7 @@ func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
 			cmd.Stdout = oggWriter
 			cmd.Stderr = os.Stderr
 
-			_, err = b.Ctx.SendMessage(m.ChannelID, "Playing `"+media.Info.Title+"`", nil)
+			_, err = b.Ctx.SendMessage(m.ChannelID, "Playing `"+media.Title+"`", nil)
 			if err != nil {
 				log.Println(err)
 			}
@@ -85,7 +85,7 @@ func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
 					}
 				}
 			}
-			_, err = b.Ctx.SendMessage(m.ChannelID, "Finished playing `"+media.Info.Title+"`", nil)
+			_, err = b.Ctx.SendMessage(m.ChannelID, "Finished playing `"+media.Title+"`", nil)
 			if err != nil {
 				log.Println(err)
 			}
@@ -151,9 +151,9 @@ func (b *Bot) Play(m *gateway.MessageCreateEvent, input bot.RawArguments) error 
 	Box.BoomBoxes[m.GuildID].Player <- media
 
 	if len(Box.BoomBoxes[m.GuildID].Player) != 0 {
-		Box.BoomBoxes[m.GuildID].Queue = append(Box.BoomBoxes[m.GuildID].Queue, media.Info.Title)
+		Box.BoomBoxes[m.GuildID].Queue = append(Box.BoomBoxes[m.GuildID].Queue, media.Title)
 
-		_, err := b.Ctx.SendMessage(m.ChannelID, "`"+media.Info.Title+"` Added to queue", nil)
+		_, err := b.Ctx.SendMessage(m.ChannelID, "`"+media.Title+"` Added to queue", nil)
 		if err != nil {
 			return err
 		}

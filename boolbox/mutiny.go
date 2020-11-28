@@ -34,7 +34,7 @@ var uClient = youtube.Client{}
 // struct to handle media
 type Media struct {
 	Stream io.Reader
-	Info   *youtube.Video
+	*youtube.Video
 }
 
 // This struct is an abstraction, making it easier to
@@ -44,7 +44,7 @@ type BoomBox struct {
 	Player chan Media
 	Cancel func()
 
-	// only used to show songs in queue
+	// only used for showing queue
 	Queue []string
 }
 
@@ -64,6 +64,7 @@ func scanQuotes(data []byte, atEOF bool) (advance int, token []byte, err error) 
 			break
 		}
 	}
+
 	// Scan until qoutes, marking end of word.
 	for width, i := 0, start; i < len(data); i += width {
 		var r rune
@@ -72,10 +73,12 @@ func scanQuotes(data []byte, atEOF bool) (advance int, token []byte, err error) 
 			return i + width, data[start:i], nil
 		}
 	}
+
 	// If we're at EOF, we have a final, non-empty, non-terminated word. Return it.
 	if atEOF && len(data) > start {
 		return len(data), data[start:], nil
 	}
+
 	// Request more data.
 	return start, nil, nil
 }
@@ -144,7 +147,7 @@ func (box *Box) GetVideo(videoID string) (Media, error) {
 		return Media{}, err
 	}
 
-	return Media{Stream: resp.Body, Info: video}, nil
+	return Media{Stream: resp.Body, Video: video}, nil
 }
 
 // OggWriter is used to play sound through voice.

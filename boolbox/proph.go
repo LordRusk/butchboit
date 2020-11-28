@@ -15,8 +15,11 @@ type Profile struct {
 	ID       discord.UserID `json:"id,string"`
 	Color    string         `json:"color,omitempty"`
 	Triggers []string       `json:"triggers,omitempty"`
-	Tags     []string       `json:"tags,omitempty"`
 	Info     string         `json:"info,omitempty"`
+
+	// array of keys which will be tried against
+	// a map[string]discord.Embed to find tags.
+	Tags []string `json:"tags,omitempty"`
 }
 
 // Profile wrapper for json
@@ -26,22 +29,19 @@ type Profiles struct {
 
 // Turns a Profile into a discord.Embed.
 func (box *Box) ProfileToEmbed(profile Profile, tagMap map[string]discord.EmbedField) (*discord.Embed, error) {
-	/* color */
 	colorHex, err := strconv.ParseInt((profile.Color)[1:], 16, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	/* tags */
+	// tags
 	fields := []discord.EmbedField{}
-
 	for _, tag := range profile.Tags {
 		if _, ok := tagMap[tag]; ok {
 			fields = append(fields, tagMap[tag])
 		}
 	}
 
-	/* make the embed */
 	embed := discord.Embed{
 		Title:       "Bool profile for " + profile.Name + " (AKA: " + profile.Nickname + ")",
 		Description: profile.Info,

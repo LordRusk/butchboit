@@ -24,8 +24,7 @@ var msgErr = errors.New("Error! Could not send message!")
 
 type Box struct {
 	// context left unexported. Always use bot.Ctx.
-	// context must not be embeded
-	ctx *bot.Context
+	ctx *bot.Context // context must not be embeded
 	*voice.Voice
 	*discord.User
 	BoomBoxes map[discord.GuildID]*BoomBox

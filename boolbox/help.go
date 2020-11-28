@@ -19,7 +19,7 @@ type Arg struct {
 	IsOptional bool   `json:"isoptional,omitempty"`
 }
 
-// singular command
+// singular command:
 // A commands state can be one of three values:
 // 0 - Working order
 // 1 - Work in progress
@@ -77,13 +77,12 @@ func (box *Box) GenHelpMsg(prefix string, botName string, cmdGroupMap map[string
 		helpMsg.WriteString(HelpDivider)
 	}
 
-	/* color */
+	// color
 	colorHex, err := strconv.ParseInt((HelpColor)[1:], 16, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	/* make the embed */
 	embed := discord.Embed{
 		Title:       botName + " Help Page:",
 		Description: helpMsg.String(),
