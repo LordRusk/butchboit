@@ -3,7 +3,7 @@ module github.com/lordrusk/butchbot
 go 1.15
 
 require (
-	github.com/diamondburned/arikawa v1.3.14
+	github.com/diamondburned/arikawa/v2 v2.0.0-20201130022133-f4860731fe3f
 	github.com/jonas747/ogg v0.0.0-20161220051205-b4f6f4cf3757
 	github.com/kkdai/youtube/v2 v2.2.1
 	github.com/lordrusk/godesu v1.0.1

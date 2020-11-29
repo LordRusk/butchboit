@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/diamondburned/arikawa/voice"
+	"github.com/diamondburned/arikawa/v2/voice"
 	"github.com/jonas747/ogg"
 	"github.com/kkdai/youtube/v2"
 )

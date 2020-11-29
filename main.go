@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/diamondburned/arikawa/bot"
+	"github.com/diamondburned/arikawa/v2/bot"
 	"github.com/lordrusk/butchbot/boolbox"
 )
 
@@ -17,7 +17,7 @@ var (
 	token   = os.Getenv("BOT_TOKEN")
 	Prefix  = "!"
 	BotName = "ButchBot"
-	Box     *boolbox.Box
+	Box     *boolbox.Box // client for the boolbox frameworks
 )
 
 func main() {
@@ -31,14 +31,15 @@ func main() {
 		ctx.HasPrefix = bot.NewPrefix(Prefix)
 		ctx.EditableCommands = true
 
+		// get box
+		var err error
+		Box, err = boolbox.NewBox(ctx)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	// get boolbox
-	Box, err = boolbox.NewBox(commands.Ctx)
 	if err != nil {
 		log.Fatalln(err)
 	}

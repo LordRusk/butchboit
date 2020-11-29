@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/diamondburned/arikawa/discord"
+	"github.com/diamondburned/arikawa/v2/discord"
 )
 
 var InvalidDateError = errors.New("Invalid date!")

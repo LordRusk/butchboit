@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/diamondburned/arikawa/bot"
-	"github.com/diamondburned/arikawa/gateway"
-	"github.com/diamondburned/arikawa/voice/voicegateway"
+	"github.com/diamondburned/arikawa/v2/bot"
+	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v2/voice/voicegateway"
 )
 
 // errors

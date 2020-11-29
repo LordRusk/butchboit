@@ -9,10 +9,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/diamondburned/arikawa/bot"
-	"github.com/diamondburned/arikawa/discord"
-	"github.com/diamondburned/arikawa/gateway"
-	"github.com/diamondburned/arikawa/voice"
+	"github.com/diamondburned/arikawa/v2/bot"
+	"github.com/diamondburned/arikawa/v2/discord"
+	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/diamondburned/arikawa/v2/voice"
 )
 
 // Timeout for menu's
@@ -35,12 +35,17 @@ func NewBox(ctx *bot.Context) (*Box, error) {
 		return nil, errors.New("Error! No client given!")
 	}
 
+	v := voice.NewVoice(ctx.State)
+	// if err := v.Open(); err != nil {
+	// 	return nil, err
+	// }
+
 	me, err := ctx.Me()
 	if err != nil {
 		return nil, err
 	}
 
-	return &Box{Voice: voice.NewVoice(ctx.State), ctx: ctx, User: me, BoomBoxes: make(map[discord.GuildID]*BoomBox)}, nil
+	return &Box{Voice: v, ctx: ctx, User: me, BoomBoxes: make(map[discord.GuildID]*BoomBox)}, nil
 }
 
 // store a model in a json file
