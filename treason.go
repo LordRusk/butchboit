@@ -25,6 +25,7 @@ func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
 
 	vst, err := b.Ctx.VoiceState(m.GuildID, m.Author.ID)
 	if err != nil {
+		log.Println(err)
 		return "", errors.New("Cannot join channel! " + m.Author.Username + " not in channel")
 	}
 
@@ -78,13 +79,6 @@ func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
 				log.Println(err)
 			}
 
-			if Box.BoomBoxes[m.GuildID] != nil {
-				if Box.BoomBoxes[m.GuildID].Cancel != nil {
-					if err := Box.BoomBoxes[m.GuildID].StopSpeaking(); err != nil {
-						log.Println("failed to stop speaking:", err)
-					}
-				}
-			}
 			_, err = b.Ctx.SendMessage(m.ChannelID, "Finished playing `"+media.Title+"`", nil)
 			if err != nil {
 				log.Println(err)
@@ -170,10 +164,6 @@ func (b *Bot) Skip(m *gateway.MessageCreateEvent) error {
 	if Box.BoomBoxes[m.GuildID].Cancel != nil {
 		Box.BoomBoxes[m.GuildID].Cancel()
 		Box.BoomBoxes[m.GuildID].Cancel = nil
-
-		if err := Box.BoomBoxes[m.GuildID].StopSpeaking(); err != nil {
-			log.Fatalln("failed to send stop speaking:", err)
-		}
 	}
 
 	return nil

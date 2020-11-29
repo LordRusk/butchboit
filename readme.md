@@ -11,7 +11,7 @@ This is nothing more then a project for me to get good at golang.
 Butch has modules. `basic` *the basic things* - help - prefix: `profile` *Get to know those in your server* - profile - profiles: `appoint` *Setup appointments* - newbool - removebool - rsvp - editbool - pickedup - bool - bools. - `treason` *Music Player* - treason - kill - play - skip - queue
 
 ## Whats up with butch?
-Queue system has been added to treason, next on the docket, playlists and moving butchbot to the v2 arikawa api, a little bit premature, but will be better in the long run for butchbot and arikawa.
+Queue system has been added to treason, next on the docket, playlists and moving butchbot to the v2 arikawa api, a little bit premature, but will be better in the long run for butchbot and arikawa. Search now works, quickly, for good.
 
 #FQA - Frequently Questioned Answers
 

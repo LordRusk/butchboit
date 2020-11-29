@@ -3,10 +3,9 @@ package boolbox
 
 import (
 	"bufio"
-	"bytes"
 	"errors"
+	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"unicode/utf8"
@@ -89,24 +88,15 @@ func (box *Box) GetVideoID(sTerms string) (string, error) {
 
 	resp, err := http.Get(YtSearchURL + sTerms)
 	if err != nil {
-		log.Println(err)
+		return "", err
+	} else if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("http status code is %s", resp.StatusCode)
 	}
 	defer resp.Body.Close()
 
 	scanner := bufio.NewScanner(resp.Body)
 	buf := make([]byte, 1024)
 	scanner.Buffer(buf, 512*1024)
-
-	jsonbytes := []byte{}
-	for scanner.Scan() {
-		if scanner.Text() == "// scraper_data_begin" {
-			scanner.Scan()
-			jsonbytes = scanner.Bytes()
-			break
-		}
-	}
-
-	scanner = bufio.NewScanner(bytes.NewReader(jsonbytes))
 	scanner.Split(scanQuotes)
 
 	var passes int
