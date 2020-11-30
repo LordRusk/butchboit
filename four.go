@@ -9,6 +9,7 @@ import (
 
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
+	"github.com/lordrusk/butchbot/boolbox"
 	"github.com/lordrusk/godesu"
 )
 
@@ -77,7 +78,7 @@ func (b *Bot) Post(*gateway.MessageCreateEvent) (*discord.Embed, error) {
 	postNum := irp.NextRandom(r)
 
 	/* build the embed */
-	embed, err := Box.FourToEmbed(r4color, thread, postNum)
+	embed, err := boolbox.FourToEmbed(r4color, thread, postNum)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +132,7 @@ func (b *Bot) Board(m *gateway.MessageCreateEvent, boardName string) (*discord.E
 	postNum := irp.NextRandom(r)
 
 	/* build the embed */
-	embed, err := Box.FourToEmbed(r4color, thread, postNum)
+	embed, err := boolbox.FourToEmbed(r4color, thread, postNum)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +189,7 @@ func (b *Bot) Board(m *gateway.MessageCreateEvent, boardName string) (*discord.E
 //        }
 //
 //        /* build the embed */
-//        embed, err := Box.FourToEmbed(r4color, selThread, postNum)
+//        embed, err := boolbox.FourToEmbed(r4color, selThread, postNum)
 //        if err != nil {
 //        	return nil, err
 //        }

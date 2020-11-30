@@ -17,7 +17,7 @@ var (
 
 	// get profiles
 	Profiles = boolbox.Profiles{}
-	_        = Box.GetStoredModel(proPath, &Profiles)
+	_        = boolbox.GetStoredModel(proPath, &Profiles)
 )
 
 var (
@@ -107,7 +107,7 @@ func (b *Bot) Profile(m *gateway.MessageCreateEvent, input bot.RawArguments) (*d
 	if string(input) == "" {
 		for _, profile := range Profiles.Ps {
 			if profile.ID == m.Author.ID {
-				embed, err := Box.ProfileToEmbed(profile, TagMap)
+				embed, err := boolbox.ProfileToEmbed(profile, TagMap)
 				if err != nil {
 					return nil, err
 				}
@@ -119,7 +119,7 @@ func (b *Bot) Profile(m *gateway.MessageCreateEvent, input bot.RawArguments) (*d
 		for _, profile := range Profiles.Ps {
 			for _, trigger := range profile.Triggers {
 				if string(input) == trigger {
-					embed, err := Box.ProfileToEmbed(profile, TagMap)
+					embed, err := boolbox.ProfileToEmbed(profile, TagMap)
 					if err != nil {
 						return nil, err
 					}

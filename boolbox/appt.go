@@ -47,19 +47,19 @@ type Appointments struct {
 }
 
 // remove an item from an array of Rsvp
-func (box *Box) RemoveRsvp(s []Rsvp, i int) []Rsvp {
+func RemoveRsvp(s []Rsvp, i int) []Rsvp {
 	s[i] = s[len(s)-1]
 	return s[:len(s)-1]
 }
 
 // remove an item from an array of Appointment
-func (box *Box) RemoveAppointment(s []Appointment, i int) []Appointment {
+func RemoveAppointment(s []Appointment, i int) []Appointment {
 	s[i] = s[len(s)-1]
 	return s[:len(s)-1]
 }
 
 // check if a date is valid, and if it is, return a Date
-func (box *Box) CheckMakeDate(input string) (Date, error) {
+func CheckMakeDate(input string) (Date, error) {
 	date := Date{}
 	pDate := strings.Split(input, "/")
 
@@ -97,7 +97,7 @@ func (box *Box) CheckMakeDate(input string) (Date, error) {
 
 // check if a time is valid, and if it is, return
 // a corrently formatted time.
-func (box *Box) CheckMakeTime(input string) (*Time, error) {
+func CheckMakeTime(input string) (*Time, error) {
 	time := [2][2]int{}
 
 	pTime := strings.Split(input, ":")
@@ -142,7 +142,7 @@ func (box *Box) CheckMakeTime(input string) (*Time, error) {
 	return &Time{}, InvalidTimeError
 }
 
-func (box *Box) BuildDate(date Date) string {
+func BuildDate(date Date) string {
 	if date.Ud {
 		return "n/a"
 	}
@@ -150,7 +150,7 @@ func (box *Box) BuildDate(date Date) string {
 	return date.Month.String() + " " + strconv.Itoa(date.Day) + ", " + strconv.Itoa(date.Year)
 }
 
-func (box *Box) BuildTime(time *Time) string {
+func BuildTime(time *Time) string {
 	if time.Ud {
 		return "n/a"
 	}
@@ -159,6 +159,6 @@ func (box *Box) BuildTime(time *Time) string {
 }
 
 // build appointment description
-func (box *Box) BuildApptDesc(appointment Appointment) string {
-	return "**Time: " + box.BuildTime(appointment.Time) + "\nDate: " + box.BuildDate(appointment.Date) + "**\n" + HelpDivider + appointment.Desc + "\n"
+func BuildApptDesc(appointment Appointment) string {
+	return "**Time: " + BuildTime(appointment.Time) + "\nDate: " + BuildDate(appointment.Date) + "**\n" + HelpDivider + appointment.Desc + "\n"
 }

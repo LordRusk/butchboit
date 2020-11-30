@@ -28,7 +28,7 @@ type Profiles struct {
 }
 
 // Turns a Profile into a discord.Embed.
-func (box *Box) ProfileToEmbed(profile Profile, tagMap map[string]discord.EmbedField) (*discord.Embed, error) {
+func ProfileToEmbed(profile Profile, tagMap map[string]discord.EmbedField) (*discord.Embed, error) {
 	colorHex, err := strconv.ParseInt((profile.Color)[1:], 16, 64)
 	if err != nil {
 		return nil, err

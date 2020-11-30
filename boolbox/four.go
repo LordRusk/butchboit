@@ -20,7 +20,7 @@ var (
 // turn a four post into a
 // quite nice looking discord
 // embed.
-func (box *Box) FourToEmbed(color string, thread godesu.Thread, postNum int) (*discord.Embed, error) {
+func FourToEmbed(color string, thread godesu.Thread, postNum int) (*discord.Embed, error) {
 	posts := thread.Posts
 	post := posts[postNum]
 

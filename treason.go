@@ -12,6 +12,7 @@ import (
 	"github.com/diamondburned/arikawa/v2/bot"
 	"github.com/diamondburned/arikawa/v2/gateway"
 	"github.com/diamondburned/arikawa/v2/voice/voicegateway"
+	"github.com/lordrusk/butchbot/boolbox"
 )
 
 // errors
@@ -42,6 +43,8 @@ func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
 		for Box.BoomBoxes[m.GuildID] != nil {
 			media := <-Box.BoomBoxes[m.GuildID].Player
 
+			Box.BoomBoxes[m.GuildID].Playing = &media
+
 			if len(Box.BoomBoxes[m.GuildID].Queue) != 0 {
 				Box.BoomBoxes[m.GuildID].Queue = Box.BoomBoxes[m.GuildID].Queue[1:]
 			}
@@ -52,12 +55,12 @@ func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
 			cmd := exec.CommandContext(ctx,
 				"ffmpeg",
 				// Streaming is slow, so a single thread is all we need.
-				"-hide_banner", "-threads", "1", "-loglevel", "error",
-				"-i", "pipe:", "-filter:a", "volume=0.25", "-c:a", "libopus", "-b:a", "64k",
-				"-f", "opus", "-",
+				"-hide_banner", "-threads", "1", "-loglevel", "error", "-ss",
+				strconv.Itoa(media.StartAt), "-i", "pipe:", "-filter:a", "volume=0.25",
+				"-c:a", "libopus", "-b:a", "64k", "-f", "opus", "-",
 			)
 
-			oggWriter := Box.NewOggWriter(Box.BoomBoxes[m.GuildID])
+			oggWriter := boolbox.NewOggWriter(Box.BoomBoxes[m.GuildID])
 			defer oggWriter.Close()
 			Box.BoomBoxes[m.GuildID].Cancel = func() { cancel(); oggWriter.Close() }
 
@@ -92,6 +95,10 @@ func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
 					}
 				}
 			}
+
+			if Box.BoomBoxes[m.GuildID] != nil {
+				Box.BoomBoxes[m.GuildID].Playing = nil
+			}
 		}
 	}()
 
@@ -123,7 +130,7 @@ func (b *Bot) Play(m *gateway.MessageCreateEvent, input bot.RawArguments) error 
 	}
 
 	var id string
-	if Box.IsLink(string(input)) {
+	if boolbox.IsLink(string(input)) {
 		id = string(input)
 	} else {
 		_, err := b.Ctx.SendMessage(m.ChannelID, "Searching `"+string(input)+"`", nil)
@@ -131,13 +138,13 @@ func (b *Bot) Play(m *gateway.MessageCreateEvent, input bot.RawArguments) error 
 			return err
 		}
 
-		id, err = Box.GetVideoID(string(input))
+		id, err = boolbox.GetVideoID(string(input))
 		if err != nil {
 			return err
 		}
 	}
 
-	media, err := Box.GetVideo(id)
+	media, err := boolbox.GetVideo(id)
 	if err != nil {
 		log.Println(err)
 	}

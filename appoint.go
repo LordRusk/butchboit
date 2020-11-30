@@ -19,7 +19,7 @@ var (
 
 	// get bools (appointments)
 	Bools = boolbox.Appointments{}
-	_     = Box.GetStoredModel(apptsPath, &Bools)
+	_     = boolbox.GetStoredModel(apptsPath, &Bools)
 
 	// inquires
 	dateInqDef = "Date? (mm,dd,(yy))"
@@ -70,7 +70,7 @@ func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 			break
 		}
 
-		date, err := Box.CheckMakeDate(resp)
+		date, err := boolbox.CheckMakeDate(resp)
 		if err == nil {
 			appointment.Date = date
 			pass = true
@@ -93,7 +93,7 @@ func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 			break
 		}
 
-		time, err := Box.CheckMakeTime(resp)
+		time, err := boolbox.CheckMakeTime(resp)
 		if err == nil {
 			appointment.Time = time
 			pass = true
@@ -113,7 +113,7 @@ func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
 	}
 
 	Bools.Appts = append(Bools.Appts, appointment)
-	Box.StoreModel(apptsPath, Bools)
+	boolbox.StoreModel(apptsPath, Bools)
 
 	return "New bool added! Check for a current list of bools with `" + Prefix + "bools`!", nil
 }
@@ -166,8 +166,8 @@ func (b *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArguments) 
 	}
 
 	if resp == "y" || resp == "Y" {
-		Bools.Appts = Box.RemoveAppointment(Bools.Appts, bwoolNum)
-		if err := Box.StoreModel(apptsPath, Bools); err != nil {
+		Bools.Appts = boolbox.RemoveAppointment(Bools.Appts, bwoolNum)
+		if err := boolbox.StoreModel(apptsPath, Bools); err != nil {
 			log.Fatalln(err)
 		}
 
@@ -223,7 +223,7 @@ func (b *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments) (strin
 
 	for Num, rsvp := range Bools.Appts[bwoolNum].Resv {
 		if rsvp.User == m.Author {
-			Bools.Appts[bwoolNum].Resv = Box.RemoveRsvp(Bools.Appts[bwoolNum].Resv, Num)
+			Bools.Appts[bwoolNum].Resv = boolbox.RemoveRsvp(Bools.Appts[bwoolNum].Resv, Num)
 
 			return "Successfully un-RSVP'd!", nil
 		}
@@ -238,7 +238,7 @@ func (b *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments) (strin
 			return "", err
 		}
 
-		time, err := Box.CheckMakeTime(resp)
+		time, err := boolbox.CheckMakeTime(resp)
 		if err == nil {
 			rsvp.Time = time
 			pass = true
@@ -249,7 +249,7 @@ func (b *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments) (strin
 	}
 
 	Bools.Appts[bwoolNum].Resv = append(Bools.Appts[bwoolNum].Resv, rsvp)
-	Box.StoreModel(apptsPath, Bools)
+	boolbox.StoreModel(apptsPath, Bools)
 
 	return "Successfully RSVP'd!", nil
 }
@@ -342,7 +342,7 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 			return "Successfully changed bool date!", nil
 		}
 
-		date, err := Box.CheckMakeDate(resp)
+		date, err := boolbox.CheckMakeDate(resp)
 		if err != nil {
 			return "", err
 		}
@@ -362,7 +362,7 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 			return "Successfully changed bool time!", nil
 		}
 
-		time, err := Box.CheckMakeTime(resp)
+		time, err := boolbox.CheckMakeTime(resp)
 		if err != nil {
 			return "", err
 		}
@@ -456,7 +456,7 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 					return "", err
 				}
 
-				time, err := Box.CheckMakeTime(resp)
+				time, err := boolbox.CheckMakeTime(resp)
 				if err != nil {
 					_, err := b.Ctx.SendMessage(m.ChannelID, "Invalid date! Try 7:30, 20:45, etc...", nil)
 					if err != nil {
@@ -479,8 +479,8 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 			}
 
 			if resp == "y" || resp == "Y" {
-				Bools.Appts[bwoolNum].Resv = Box.RemoveRsvp(Bools.Appts[bwoolNum].Resv, rsvpNum)
-				if err := Box.StoreModel(apptsPath, Bools); err != nil {
+				Bools.Appts[bwoolNum].Resv = boolbox.RemoveRsvp(Bools.Appts[bwoolNum].Resv, rsvpNum)
+				if err := boolbox.StoreModel(apptsPath, Bools); err != nil {
 					log.Fatalln(err)
 				}
 
@@ -495,10 +495,6 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 }
 
 func (b *Bot) Pickedup(m *gateway.MessageCreateEvent) (string, error) {
-	// cleanup
-	del := Box.Track2Delete(m.ChannelID)
-	defer del()
-
 	var bwoolNum int
 	var pass bool
 	var builder strings.Builder
@@ -595,7 +591,7 @@ func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 						if rsvp.Pickedup == true {
 							field.Value = "*Picked Up*"
 						} else {
-							field.Value = "Pickup time: " + Box.BuildTime(&boolbox.Time{Time: rsvp.Time.Time})
+							field.Value = "Pickup time: " + boolbox.BuildTime(&boolbox.Time{Time: rsvp.Time.Time})
 						}
 
 						fields = append(fields, field)
@@ -604,7 +600,7 @@ func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 
 				embed := discord.Embed{
 					Title:       bwool.Name,
-					Description: Box.BuildApptDesc(bwool),
+					Description: boolbox.BuildApptDesc(bwool),
 					Fields:      fields,
 				}
 
@@ -617,10 +613,6 @@ func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 }
 
 func (b *Bot) Bools(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
-	// cleanup
-	del := Box.Track2Delete(m.ChannelID)
-	defer del()
-
 	if len(Bools.Appts) == 0 {
 		return nil, errors.New("No bools currently active. Use `" + Prefix + "newbool` to add a new scheduled bool")
 	}

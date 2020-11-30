@@ -49,7 +49,7 @@ func NewBox(ctx *bot.Context) (*Box, error) {
 }
 
 // store a model in a json file
-func (box *Box) StoreModel(path string, model interface{}) error {
+func StoreModel(path string, model interface{}) error {
 	jsonBytes, err := json.MarshalIndent(model, "", "	")
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func (box *Box) StoreModel(path string, model interface{}) error {
 }
 
 // get stored model from json file.
-func (box *Box) GetStoredModel(path string, model interface{}) error {
+func GetStoredModel(path string, model interface{}) error {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err

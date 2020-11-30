@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	// "time"
 	"unicode/utf8"
 
 	"github.com/diamondburned/arikawa/v2/voice"
@@ -34,17 +35,19 @@ var uClient = youtube.Client{}
 type Media struct {
 	Stream io.Reader
 	*youtube.Video
+
+	// used for rebasing
+	StartAt int
 }
 
 // This struct is an abstraction, making it easier to
 // have multiple voices on different guilds.
 type BoomBox struct {
 	*voice.Session
-	Player chan Media
-	Cancel func()
-
-	// only used for showing queue
-	Queue []string
+	Player  chan Media
+	Cancel  func()
+	Playing *Media   // used for rebasing
+	Queue   []string // only used for showing queue
 }
 
 func (box *Box) NewBoomBox(vs *voice.Session) *BoomBox {
@@ -83,7 +86,7 @@ func scanQuotes(data []byte, atEOF bool) (advance int, token []byte, err error) 
 }
 
 // Get the video ID from the top search result from youtube.
-func (box *Box) GetVideoID(sTerms string) (string, error) {
+func GetVideoID(sTerms string) (string, error) {
 	sTerms = strings.ReplaceAll(sTerms, " ", "+")
 
 	resp, err := http.Get(YtSearchURL + sTerms)
@@ -114,7 +117,7 @@ func (box *Box) GetVideoID(sTerms string) (string, error) {
 	return "", errors.New("Error! Could not find video id")
 }
 
-func (box *Box) IsLink(input string) bool {
+func IsLink(input string) bool {
 	plink := strings.Split(input, "/")
 
 	if plink[0] == "https:" || plink[0] == "http:" {
@@ -126,7 +129,7 @@ func (box *Box) IsLink(input string) bool {
 	return false
 }
 
-func (box *Box) GetVideo(videoID string) (Media, error) {
+func GetVideo(videoID string) (Media, error) {
 	video, err := uClient.GetVideo(videoID)
 	if err != nil {
 		return Media{}, err
@@ -147,7 +150,7 @@ type OggWriter struct {
 	errCh chan error
 }
 
-func (box *Box) NewOggWriter(w io.Writer) *OggWriter {
+func NewOggWriter(w io.Writer) *OggWriter {
 	pr, pw := io.Pipe()
 	errCh := make(chan error, 1)
 

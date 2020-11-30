@@ -13,11 +13,11 @@ var (
 
 	// get boolbox.CmdGroups for help messase generation
 	help = boolbox.CmdGroups{}
-	_    = Box.GetStoredModel(helpPath, &help)
+	_    = boolbox.GetStoredModel(helpPath, &help)
 )
 
 func (b *Bot) Help(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
-	helpMsg, err := Box.GenHelpMsg(Prefix, BotName, help.Cm)
+	helpMsg, err := boolbox.GenHelpMsg(Prefix, BotName, help.Cm)
 	if err != nil {
 		return nil, err
 	}

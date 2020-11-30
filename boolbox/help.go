@@ -44,7 +44,7 @@ type CmdGroups struct {
 }
 
 // generate the help message
-func (box *Box) GenHelpMsg(prefix string, botName string, cmdGroupMap map[string]CmdGroup) (*discord.Embed, error) {
+func GenHelpMsg(prefix string, botName string, cmdGroupMap map[string]CmdGroup) (*discord.Embed, error) {
 	/* generate the help command */
 	var helpMsg strings.Builder
 
