@@ -67,7 +67,7 @@ func MakeDate(str string) (Date, error) {
 	pstr := strings.Split(str, "/")
 	if len(pstr) == 2 || len(pstr) == 3 {
 		m, err1 := strconv.Atoi(pstr[0])
-		d, err2 := strconv.Atoi(pstr[2])
+		d, err2 := strconv.Atoi(pstr[1])
 		if err1 != nil || err2 != nil || m < 1 || m > 12 || d < 1 || d > 31 {
 			return Date{}, InvalidDateError
 		}

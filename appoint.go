@@ -106,30 +106,23 @@ func (b *Bot) Removebool(m *gateway.MessageCreateEvent) (string, error) {
 
 	builder.WriteString("Which bool would you like?\n```\n")
 	for num, appointment := range bools.Appts {
-		builder.WriteString(fmt.Sprintf("[%d] %s\n", strconv.Itoa(num), appointment.Name))
+		builder.WriteString(fmt.Sprintf("[%d] %s\n", num, appointment.Name))
 	}
 	builder.WriteString("```")
 
 	var bwoolNum int
+out:
 	for {
 		resp, err := box.Ask(m, builder.String(), 1)
 		if err != nil {
 			return "", err
 		}
 
-		iResp, err := strconv.Atoi(resp) // purposefully not check error
-		if err != nil {
-			if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
-				logger.Printf("Failed to send message: %s\n", err)
-			}
-
-			continue
-		}
-
+		iResp, _ := strconv.Atoi(resp) // purposefully not check error
 		for num, _ := range bools.Appts {
 			if num == iResp {
 				bwoolNum = num
-				break
+				break out
 			}
 		}
 
@@ -161,30 +154,23 @@ func (b *Bot) Rsvp(m *gateway.MessageCreateEvent) (string, error) {
 
 	builder.WriteString("Which bool would you like to rsvp for?\n```\n")
 	for num, appointment := range bools.Appts {
-		builder.WriteString(fmt.Sprintf("[%d] %s\n", strconv.Itoa(num), appointment.Name))
+		builder.WriteString(fmt.Sprintf("[%d] %s\n", num, appointment.Name))
 	}
 	builder.WriteString("```")
 
 	var bwoolNum int
+out:
 	for {
 		resp, err := box.Ask(m, builder.String(), 1)
 		if err != nil {
 			return "", err
 		}
 
-		iResp, err := strconv.Atoi(resp) // intentionally not check error
-		if err != nil {
-			if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
-				logger.Printf("Failed to send message: %s\n", err)
-			}
-
-			continue
-		}
-
+		iResp, _ := strconv.Atoi(resp) // intentionally not check error
 		for num, _ := range bools.Appts {
 			if num == iResp {
 				bwoolNum = num
-				break
+				break out
 			}
 		}
 
@@ -229,7 +215,7 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 	var builder strings.Builder
 	builder.WriteString("Which bool would you like?\n```\n")
 	for num, appointment := range bools.Appts {
-		builder.WriteString(fmt.Sprintf("[%d] %s\n", strconv.Itoa(num), appointment.Name))
+		builder.WriteString(fmt.Sprintf("[%d] %s\n", num, appointment.Name))
 	}
 	builder.WriteString("```")
 
@@ -240,15 +226,7 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 			return "", err
 		}
 
-		iResp, err := strconv.Atoi(resp) // purposefully not check error
-		if err != nil {
-			if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
-				logger.Printf("Failed to send message: %s\n", err)
-			}
-
-			continue
-		}
-
+		iResp, _ := strconv.Atoi(resp) // purposefully not check error
 		for num, _ := range bools.Appts {
 			if num == iResp {
 				bwoolNum = num
@@ -363,7 +341,7 @@ func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
 	builder.Reset()
 	builder.WriteString("```\n")
 	for num, rsvp := range bools.Appts[bwoolNum].Resv {
-		builder.WriteString(fmt.Sprintf("[%d] %s\n", strconv.Itoa(num), rsvp.User.Username))
+		builder.WriteString(fmt.Sprintf("[%d] %s\n", num, rsvp.User.Username))
 	}
 	builder.WriteString("```")
 
@@ -465,7 +443,7 @@ func (b *Bot) Pickedup(m *gateway.MessageCreateEvent) (string, error) {
 	var builder strings.Builder
 	builder.WriteString("Wich bool would you like?\n```\n")
 	for num, appointment := range bools.Appts {
-		builder.WriteString(fmt.Sprintf("[%d] %s\n", strconv.Itoa(num), appointment.Name))
+		builder.WriteString(fmt.Sprintf("[%d] %s\n", num, appointment.Name))
 	}
 	builder.WriteString("```")
 
@@ -518,7 +496,7 @@ func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 	var builder strings.Builder
 	builder.WriteString("```\n")
 	for num, appointment := range bools.Appts {
-		builder.WriteString(fmt.Sprintf("[%d] %s\n", strconv.Itoa(num), appointment.Name))
+		builder.WriteString(fmt.Sprintf("[%d] %s\n", num, appointment.Name))
 	}
 	builder.WriteString("```")
 
@@ -548,13 +526,13 @@ func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 
 						fields = append(fields, field)
 					}
-
-					return &discord.Embed{
-						Title:       bwool.Name,
-						Description: boolbox.BuildApptDesc(bwool),
-						Fields:      fields,
-					}, nil
 				}
+
+				return &discord.Embed{
+					Title:       bwool.Name,
+					Description: boolbox.BuildApptDesc(bwool),
+					Fields:      fields,
+				}, nil
 			}
 		}
 	}
@@ -568,7 +546,6 @@ func (b *Bot) Bools(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 	}
 
 	fields := []discord.EmbedField{}
-
 	for _, bwool := range bools.Appts {
 		field := discord.EmbedField{
 			Name:   fmt.Sprintf("`%s`", bwool.Name),
@@ -578,8 +555,10 @@ func (b *Bot) Bools(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 		fields = append(fields, field)
 	}
 
-	return &discord.Embed{
+	embed := discord.Embed{
 		Title:  "Current Bools",
 		Fields: fields,
-	}, nil
+	}
+
+	return &embed, nil
 }

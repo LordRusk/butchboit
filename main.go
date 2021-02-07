@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/diamondburned/arikawa/v2/bot"
+	"github.com/diamondburned/arikawa/v2/voice"
 	"github.com/lordrusk/butchbot/boolbox"
 )
 
@@ -39,6 +40,9 @@ func main() {
 	wait, err := bot.Start(*token, commands, func(ctx *bot.Context) error {
 		ctx.HasPrefix = bot.NewPrefix(*prefix)
 		ctx.EditableCommands = true // <- this is nice
+
+		// add voice intents
+		voice.AddIntents(ctx.Gateway)
 
 		// get box
 		var err error

@@ -33,16 +33,16 @@ func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
 
 	vst, err := b.Ctx.VoiceState(m.GuildID, m.Author.ID)
 	if err != nil {
-		logger.Printf("Failed to get voice state of %v: %s\n", m.Author, err)
+		logger.Printf("Failed to get voice state of %s: %s\n", m.Author.Username, err)
 		return "", fmt.Errorf("Cannot join channel! %s not in channel", m.Author.Username)
 	}
+
+	box.BoomBoxes[m.GuildID] = box.NewBoomBox(v)
 
 	if err := box.BoomBoxes[m.GuildID].JoinChannel(m.GuildID, vst.ChannelID, false, true); err != nil {
 		logger.Printf("Failed to join channel: %s\n", err)
 		return "", errors.New("Cannot join channel!")
 	}
-
-	box.BoomBoxes[m.GuildID] = box.NewBoomBox(v)
 
 	// setup queue system
 	go func() {
@@ -188,7 +188,7 @@ func (b *Bot) Queue(m *gateway.MessageCreateEvent) (string, error) {
 
 	var builder strings.Builder
 	for num, title := range box.BoomBoxes[m.GuildID].Queue {
-		builder.WriteString(fmt.Sprintf("%d: `%s`\n", strconv.Itoa(num+1), title))
+		builder.WriteString(fmt.Sprintf("%s: `%s`\n", strconv.Itoa(num+1), title))
 	}
 
 	return builder.String(), nil
