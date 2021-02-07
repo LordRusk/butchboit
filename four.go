@@ -1,3 +1,6 @@
+// this is staying unchanged because
+// i hate working with the 4chan
+// api
 package main
 
 import (

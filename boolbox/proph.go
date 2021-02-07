@@ -1,4 +1,3 @@
-// this is where butch keeps his profiling system.
 package boolbox
 
 import (
@@ -7,8 +6,7 @@ import (
 	"github.com/diamondburned/arikawa/v2/discord"
 )
 
-// holds all information about a
-// bool profile
+// holds a profile
 type Profile struct {
 	Name     string         `json:"name,omitempty"`
 	Nickname string         `json:"nickname,omitempty"`
@@ -27,7 +25,6 @@ type Profiles struct {
 	Ps []Profile `json:"ps,omitempty"`
 }
 
-// Turns a Profile into a discord.Embed.
 func ProfileToEmbed(profile Profile, tagMap map[string]discord.EmbedField) (*discord.Embed, error) {
 	colorHex, err := strconv.ParseInt((profile.Color)[1:], 16, 64)
 	if err != nil {

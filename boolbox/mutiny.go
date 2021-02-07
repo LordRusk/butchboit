@@ -1,4 +1,3 @@
-// where butchbot keeps his mutiny.
 package boolbox
 
 import (
@@ -8,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	// "time"
 	"unicode/utf8"
 
 	"github.com/diamondburned/arikawa/v2/voice"
@@ -45,55 +43,25 @@ type Media struct {
 type BoomBox struct {
 	*voice.Session
 	Player  chan Media
-	Cancel  func()
+	Cancel  func()   // not needed?
 	Playing *Media   // used for rebasing
 	Queue   []string // only used for showing queue
 }
 
+// return a new boombox
 func (box *Box) NewBoomBox(vs *voice.Session) *BoomBox {
 	return &BoomBox{Session: vs, Player: make(chan Media, MaxQueueLength)}
 }
 
-// a bufio split function that returns whats inbetween two
-// two quoutes as a token
-func scanQuotes(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	// Skip leading qoutes.
-	start := 0
-	for width := 0; start < len(data); start += width {
-		var r rune
-		r, width = utf8.DecodeRune(data[start:])
-		if r != '"' {
-			break
-		}
-	}
+// gets top search result's video ID from youtube
+func GetVidID(str string) (string, error) {
+	str = strings.ReplaceAll(str, " ", "+")
 
-	// Scan until qoutes, marking end of word.
-	for width, i := 0, start; i < len(data); i += width {
-		var r rune
-		r, width = utf8.DecodeRune(data[i:])
-		if r == '"' {
-			return i + width, data[start:i], nil
-		}
-	}
-
-	// If we're at EOF, we have a final, non-empty, non-terminated word. Return it.
-	if atEOF && len(data) > start {
-		return len(data), data[start:], nil
-	}
-
-	// Request more data.
-	return start, nil, nil
-}
-
-// Get the video ID from the top search result from youtube.
-func GetVideoID(sTerms string) (string, error) {
-	sTerms = strings.ReplaceAll(sTerms, " ", "+")
-
-	resp, err := http.Get(YtSearchURL + sTerms)
+	resp, err := http.Get(YtSearchURL + str)
 	if err != nil {
 		return "", err
 	} else if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("http status code is %s", resp.StatusCode)
+		return "", fmt.Errorf("http status not ok: %s", resp.StatusCode)
 	}
 	defer resp.Body.Close()
 
@@ -143,6 +111,37 @@ func GetVideo(videoID string) (Media, error) {
 	return Media{Stream: resp.Body, Video: video}, nil
 }
 
+// bufio.Split function
+// token between two '"'
+func scanQuotes(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	// Skip leading qoutes.
+	start := 0
+	for width := 0; start < len(data); start += width {
+		var r rune
+		r, width = utf8.DecodeRune(data[start:])
+		if r != '"' {
+			break
+		}
+	}
+
+	// Scan until qoutes, marking end of word.
+	for width, i := 0, start; i < len(data); i += width {
+		var r rune
+		r, width = utf8.DecodeRune(data[i:])
+		if r == '"' {
+			return i + width, data[start:i], nil
+		}
+	}
+
+	// If we're at EOF, we have a final, non-empty, non-terminated word. Return it.
+	if atEOF && len(data) > start {
+		return len(data), data[start:], nil
+	}
+
+	// Request more data.
+	return start, nil, nil
+}
+
 // OggWriter is used to play sound through voice.
 type OggWriter struct {
 	pr    *io.PipeReader
@@ -150,6 +149,7 @@ type OggWriter struct {
 	errCh chan error
 }
 
+// returns a new OggWriter
 func NewOggWriter(w io.Writer) *OggWriter {
 	pr, pw := io.Pipe()
 	errCh := make(chan error, 1)
@@ -176,6 +176,7 @@ func NewOggWriter(w io.Writer) *OggWriter {
 	}
 }
 
+// Write to an OggWriter
 func (w *OggWriter) Write(b []byte) (int, error) {
 	select {
 	case err := <-w.errCh:
@@ -185,6 +186,7 @@ func (w *OggWriter) Write(b []byte) (int, error) {
 	}
 }
 
+// Close an OggWriter
 func (w *OggWriter) Close() error {
 	w.pw.Close()
 	return w.pr.Close()

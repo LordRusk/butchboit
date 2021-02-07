@@ -10,9 +10,11 @@ import (
 	"github.com/diamondburned/arikawa/v2/discord"
 )
 
+// errors
 var InvalidDateError = errors.New("Invalid date!")
 var InvalidTimeError = errors.New("Invalid time!")
 
+// stuct to hold a date
 type Date struct {
 	Day   int        `json:"day,omitempty"`
 	Month time.Month `json:"month,omitempty"`
@@ -20,19 +22,20 @@ type Date struct {
 	Ud    bool       `json:"undetermined,omitempty"` // whether the date is undetermined.
 }
 
+// struct to hold a time
 type Time struct {
 	Time [2][2]int `json:"time,omitempty"`
 	Ud   bool      `json:"undetermined,omitempty"` // whether the time is undetermined
 }
 
-// rsvp struct used to keep track
-// of pickup times and discord.user's
+// struct to hold an rsvp
 type Rsvp struct {
 	User     discord.User `json:"user,omitempty"`
-	*Time    `json:"pu_time,omitempty"`
+	Time     `json:"pu_time,omitempty"`
 	Pickedup bool `json:"picked_up,omitempty"`
 }
 
+// struct to hold an appointment
 type Appointment struct {
 	Name  string `json:"name,omitempty"`
 	Date  Date   `json:"date,omitempty"`
@@ -58,88 +61,80 @@ func RemoveAppointment(s []Appointment, i int) []Appointment {
 	return s[:len(s)-1]
 }
 
-// check if a date is valid, and if it is, return a Date
-func CheckMakeDate(input string) (Date, error) {
+// make a Date out of xx/xx(/xx)
+func MakeDate(str string) (Date, error) {
 	date := Date{}
-	pDate := strings.Split(input, "/")
-
-	if len(pDate) == 2 || len(pDate) == 3 {
-		mInt, err1 := strconv.Atoi(pDate[0])
-		dInt, err2 := strconv.Atoi(pDate[1])
-		if err1 != nil || err2 != nil {
-			return date, InvalidDateError
+	pstr := strings.Split(str, "/")
+	if len(pstr) == 2 || len(pstr) == 3 {
+		m, err1 := strconv.Atoi(pstr[0])
+		d, err2 := strconv.Atoi(pstr[2])
+		if err1 != nil || err2 != nil || m < 1 || m > 12 || d < 1 || d > 31 {
+			return Date{}, InvalidDateError
 		}
 
-		if mInt < 1 || mInt > 12 || dInt < 1 || dInt > 31 {
-			return date, InvalidDateError
-		}
-
-		if len(pDate) == 3 {
-			yInt, err := strconv.Atoi(pDate[2])
+		if len(pstr) == 3 {
+			y, err := strconv.Atoi(pstr[2])
 			if err != nil {
-				return date, InvalidDateError
+				return Date{}, InvalidDateError
 			}
 
-			date.Year = yInt
+			date.Year = y
 		} else {
-			year, _, _ := time.Now().Clock()
-			date.Year = year
+			y, _, _ := time.Now().Clock()
+			date.Year = y
 		}
 
-		date.Month = time.Month(mInt)
-		date.Day = dInt
+		date.Month = time.Month(m)
+		date.Day = d
 
 		return date, nil
 	}
 
-	return date, InvalidTimeError
+	return Date{}, InvalidTimeError
 }
 
-// check if a time is valid, and if it is, return
-// a corrently formatted time.
-func CheckMakeTime(input string) (*Time, error) {
+// make a Time out of xx:xx
+func MakeTime(str string) (Time, error) {
 	time := [2][2]int{}
+	pstr := strings.Split(str, ":")
+	if len(pstr) == 2 {
+		spstr1 := []byte(pstr[0])
+		spstr2 := []byte(pstr[1])
 
-	pTime := strings.Split(input, ":")
-
-	if len(pTime) == 2 {
-		spTime1 := []byte(pTime[0])
-		spTime2 := []byte(pTime[1])
-
-		if (len(spTime1) == 1 || len(spTime1) == 2) && len(spTime2) == 2 {
-			if len(spTime1) == 2 {
-				tsp1, err1 := strconv.Atoi(string(spTime1[0]))
-				tsp2, err2 := strconv.Atoi(string(spTime1[1]))
+		if (len(spstr1) == 1 || len(spstr1) == 2) && len(spstr2) == 2 {
+			if len(spstr1) == 2 {
+				tsp1, err1 := strconv.Atoi(string(spstr1[0]))
+				tsp2, err2 := strconv.Atoi(string(spstr1[1]))
 				if err1 != nil || err2 != nil {
-					return &Time{}, InvalidTimeError
+					return Time{}, InvalidTimeError
 				}
 
 				time[0][0] = tsp1
 				time[0][1] = tsp2
 			} else {
-				tsp1, err1 := strconv.Atoi(string(spTime1[0]))
+				tsp1, err1 := strconv.Atoi(string(spstr1[0]))
 				if err1 != nil {
-					return &Time{}, InvalidTimeError
+					return Time{}, InvalidTimeError
 				}
 
 				time[0][1] = tsp1
 			}
 
-			tsp3, err3 := strconv.Atoi(string(spTime2[0]))
-			tsp4, err4 := strconv.Atoi(string(spTime2[1]))
+			tsp3, err3 := strconv.Atoi(string(spstr2[0]))
+			tsp4, err4 := strconv.Atoi(string(spstr2[1]))
 			if err3 != nil || err4 != nil {
-				return &Time{}, InvalidTimeError
+				return Time{}, InvalidTimeError
 			}
 
 			time[1][0] = tsp3
 			time[1][1] = tsp4
 
-			return &Time{Time: time}, nil
+			return Time{Time: time}, nil
 		}
 
 	}
 
-	return &Time{}, InvalidTimeError
+	return Time{}, InvalidTimeError
 }
 
 func BuildDate(date Date) string {
@@ -158,7 +153,6 @@ func BuildTime(time *Time) string {
 	return strconv.Itoa(time.Time[0][0]) + strconv.Itoa(time.Time[0][1]) + ":" + strconv.Itoa(time.Time[1][0]) + strconv.Itoa(time.Time[1][1])
 }
 
-// build appointment description
 func BuildApptDesc(appointment Appointment) string {
 	return "**Time: " + BuildTime(appointment.Time) + "\nDate: " + BuildDate(appointment.Date) + "**\n" + HelpDivider + appointment.Desc + "\n"
 }

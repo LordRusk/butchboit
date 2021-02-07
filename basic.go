@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/diamondburned/arikawa/v2/bot"
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
@@ -11,13 +13,13 @@ var (
 	// path to CmdGroups for help menus
 	helpPath = "./help.json"
 
-	// get boolbox.CmdGroups for help messase generation
+	// get boolbox.CmdGroups for help message generation
 	help = boolbox.CmdGroups{}
 	_    = boolbox.GetStoredModel(helpPath, &help)
 )
 
 func (b *Bot) Help(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
-	helpMsg, err := boolbox.GenHelpMsg(Prefix, BotName, help.Cm)
+	helpMsg, err := boolbox.GenHelpMsg(*prefix, *botName, help.Cm)
 	if err != nil {
 		return nil, err
 	}
@@ -26,8 +28,8 @@ func (b *Bot) Help(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 }
 
 func (b *Bot) Prefix(m *gateway.MessageCreateEvent, input bot.RawArguments) (string, error) {
-	Prefix = string(input)
-	b.Ctx.HasPrefix = bot.NewPrefix(Prefix)
+	*prefix = string(input)
+	b.Ctx.HasPrefix = bot.NewPrefix(*prefix)
 
-	return "`" + Prefix + "` is the new prefix!", nil
+	return fmt.Sprintf("`%s` is the new prefix!", *prefix), nil
 }

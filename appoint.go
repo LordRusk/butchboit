@@ -2,585 +2,537 @@ package main
 
 import (
 	"errors"
-	"log"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/diamondburned/arikawa/v2/bot"
 	"github.com/diamondburned/arikawa/v2/discord"
 	"github.com/diamondburned/arikawa/v2/gateway"
 	"github.com/lordrusk/butchbot/boolbox"
 )
 
 var (
-	// path to where bools (appointments) are stored
+	// path to where appointments are stored
 	apptsPath = os.Getenv("HOME") + "/.local/share/bools.json"
 
-	// get bools (appointments)
-	Bools = boolbox.Appointments{}
-	_     = boolbox.GetStoredModel(apptsPath, &Bools)
-
-	// inquires
-	dateInqDef = "Date? (mm,dd,(yy))"
-	timeInqDef = "Start of pickup time?"
-	descInqDef = "Description?"
-	rsvpInqDef = "What is your estimated pickup time?"
+	// get appointments
+	bools = boolbox.Appointments{}
+	_     = boolbox.GetStoredModel(apptsPath, &bools)
 )
+
+// inquires
+var dateInqDef = "Date? (mm,dd,(yy))"
+var timeInqDef = "Start of pickup time?"
+var descInqDef = "Description?"
+var rsvpInqDef = "What is your estimated pickup time?"
 
 // opts used for user-end menu's
 var apptNumOpts = "```\n[0] Name\n[1] Date\n[2] Time\n[3] Description\n[4] Rsvp's\n[5] Exit```"
 var rsvpNumOpts = "```\n[0] Edit Time\n[1] Delete rsvp\n[2] Exit```"
 
-// great demonstrastion of the
-// Ask() function
 func (b *Bot) Newbool(m *gateway.MessageCreateEvent) (string, error) {
-	// cleanup
-	del := Box.Track2Delete(m.ChannelID)
-	defer del()
-
-	var pass bool
-
 	dateInq := dateInqDef
 	timeInq := timeInqDef
 	descInq := descInqDef
 
 	appointment := boolbox.Appointment{}
 
-	// get the name of the appointment
-	resp, err := Box.Ask(m, "Name?", 1)
+	resp, err := box.Ask(m, "Name?", 1)
 	if err != nil {
 		return "", err
+	} else if resp == "" {
+		return "", errors.New("Response cannot be ''!")
 	}
 
-	if resp != "" {
-		appointment.Name = resp
-	}
-
-	// get the date of the appointment
-	for pass == false {
-		resp, err := Box.Ask(m, dateInq, 1)
+	for { // get the date
+		resp, err := box.Ask(m, dateInq, 1)
 		if err != nil {
 			return "", err
 		}
 
-		sResp := strings.Split(resp, "/")
-		if (sResp[0] == "n" || sResp[0] == "N") && (sResp[1] == "a" || sResp[1] == "A") {
+		if strings.Contains(strings.ToLower(resp), "n/a") {
 			appointment.Date.Ud = true
 			break
 		}
 
-		date, err := boolbox.CheckMakeDate(resp)
-		if err == nil {
-			appointment.Date = date
-			pass = true
+		date, err := boolbox.MakeDate(resp)
+		if err != nil {
+			dateInq = "Invalid date! Try 7/11, 23/12/2020, etc..."
+			continue
 		}
 
-		dateInq = "Invalid date! Try 7/11, 23/12/2020, etc..."
+		appointment.Date = date
+		break
 	}
 
-	// get the time of the appointment
-	pass = false
-	for pass == false {
-		resp, err := Box.Ask(m, timeInq, 1)
+	for { // get the time
+		resp, err := box.Ask(m, timeInq, 1)
 		if err != nil {
 			return "", err
 		}
 
-		sResp := strings.Split(resp, "/")
-		if (sResp[0] == "n" || sResp[0] == "N") && (sResp[1] == "a" || sResp[1] == "A") {
+		if strings.Contains(strings.ToLower(resp), "n/a") {
 			appointment.Time.Ud = true
 			break
 		}
 
-		time, err := boolbox.CheckMakeTime(resp)
-		if err == nil {
-			appointment.Time = time
-			pass = true
+		time, err := boolbox.MakeTime(resp)
+		if err != nil {
+			timeInq = "Invalid date! Try 7:30, 20:45, etc..."
+			continue
 		}
 
-		timeInq = "Invalid date! Try 7:30, 20:45, etc..."
+		appointment.Time = &time
+		break
 	}
 
-	// get the description of the appointment
-	resp, err = Box.Ask(m, descInq, 4)
+	resp, err = box.Ask(m, descInq, 4) // extended timeout timer
 	if err != nil {
 		return "", err
+	} else if resp == "" {
+		return "", errors.New("Response cannot be ''!")
 	}
 
-	if resp != "" {
-		appointment.Desc = resp
+	bools.Appts = append(bools.Appts, appointment)
+	if err := boolbox.StoreModel(apptsPath, bools); err != nil {
+		logger.Printf("Failed to store appointments: %s\n", err)
 	}
-
-	Bools.Appts = append(Bools.Appts, appointment)
-	boolbox.StoreModel(apptsPath, Bools)
-
-	return "New bool added! Check for a current list of bools with `" + Prefix + "bools`!", nil
+	return "New bool added! Check for a current list of bools with `" + *prefix + "bools`!", nil
 }
 
-func (b *Bot) Removebool(m *gateway.MessageCreateEvent, input bot.RawArguments) (string, error) {
-	// cleanup
-	del := Box.Track2Delete(m.ChannelID)
-	defer del()
-
-	var pass bool
-	var bwoolNum int
+func (b *Bot) Removebool(m *gateway.MessageCreateEvent) (string, error) {
 	var builder strings.Builder
 
-	builder.Write([]byte("Which bool would you like?\n```\n"))
-	for num, appointment := range Bools.Appts {
-		builder.Write([]byte("["))
-		builder.Write([]byte(strconv.Itoa(num)))
-		builder.Write([]byte("] "))
-		builder.Write([]byte(appointment.Name))
-		builder.Write([]byte("\n"))
+	builder.WriteString("Which bool would you like?\n```\n")
+	for num, appointment := range bools.Appts {
+		builder.WriteString(fmt.Sprintf("[%d] %s\n", strconv.Itoa(num), appointment.Name))
 	}
-	builder.Write([]byte("```"))
+	builder.WriteString("```")
 
-	for pass == false {
-		resp, err := Box.Ask(m, builder.String(), 1)
+	var bwoolNum int
+	for {
+		resp, err := box.Ask(m, builder.String(), 1)
 		if err != nil {
 			return "", err
 		}
 
-		intResp, _ := strconv.Atoi(resp)
-		for num, _ := range Bools.Appts {
-			if num == intResp {
+		iResp, err := strconv.Atoi(resp) // purposefully not check error
+		if err != nil {
+			if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
+				logger.Printf("Failed to send message: %s\n", err)
+			}
+
+			continue
+		}
+
+		for num, _ := range bools.Appts {
+			if num == iResp {
 				bwoolNum = num
-				pass = true
+				break
 			}
 		}
 
-		if pass == false {
-			_, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
-			if err != nil {
-				return "", err
-			}
+		if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range! Try again...\n", nil); err != nil {
+			logger.Printf("Failed to send message: %s\n", err)
 		}
-
 	}
 
-	resp, err := Box.Ask(m, "Do you really want to remove that bool? [y/N]", 1)
+	resp, err := box.Ask(m, "Do you really want to remove that bool? [y/N]", 1)
 	if err != nil {
 		return "", nil
 	}
 
 	if resp == "y" || resp == "Y" {
-		Bools.Appts = boolbox.RemoveAppointment(Bools.Appts, bwoolNum)
-		if err := boolbox.StoreModel(apptsPath, Bools); err != nil {
-			log.Fatalln(err)
+		bools.Appts = boolbox.RemoveAppointment(bools.Appts, bwoolNum)
+		if err := boolbox.StoreModel(apptsPath, bools); err != nil {
+			logger.Printf("Failed to store appointments: %s\n", err)
 		}
 
 		return "Successfully removed bool!", nil
 	}
 
-	return "Bool not removed.", nil
+	return "Bool not removed", nil
 }
 
-// another demonstration on
-// the usefullness of Ask(, 1)
-func (b *Bot) Rsvp(m *gateway.MessageCreateEvent, input bot.RawArguments) (string, error) {
-	// cleanup
-	del := Box.Track2Delete(m.ChannelID)
-	defer del()
-
-	var bwoolNum int
-	var pass bool
+func (b *Bot) Rsvp(m *gateway.MessageCreateEvent) (string, error) {
 	var builder strings.Builder
 	rsvpInq := rsvpInqDef
 
-	builder.Write([]byte("Which bool would you like?\n```\n"))
-	for num, appointment := range Bools.Appts {
-		builder.Write([]byte("["))
-		builder.Write([]byte(strconv.Itoa(num)))
-		builder.Write([]byte("] "))
-		builder.Write([]byte(appointment.Name))
-		builder.Write([]byte("\n"))
+	builder.WriteString("Which bool would you like to rsvp for?\n```\n")
+	for num, appointment := range bools.Appts {
+		builder.WriteString(fmt.Sprintf("[%d] %s\n", strconv.Itoa(num), appointment.Name))
 	}
-	builder.Write([]byte("```"))
+	builder.WriteString("```")
 
-	for pass == false {
-		resp, err := Box.Ask(m, builder.String(), 1)
+	var bwoolNum int
+	for {
+		resp, err := box.Ask(m, builder.String(), 1)
 		if err != nil {
 			return "", err
 		}
 
-		intResp, _ := strconv.Atoi(resp)
-		for num, _ := range Bools.Appts {
-			if num == intResp {
+		iResp, err := strconv.Atoi(resp) // intentionally not check error
+		if err != nil {
+			if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
+				logger.Printf("Failed to send message: %s\n", err)
+			}
+
+			continue
+		}
+
+		for num, _ := range bools.Appts {
+			if num == iResp {
 				bwoolNum = num
-				pass = true
+				break
 			}
 		}
 
-		if pass == false {
-			_, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
-			if err != nil {
-				return "", err
-			}
+		if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
+			logger.Printf("Failed to send message: %s\n", err)
 		}
 	}
 
-	for Num, rsvp := range Bools.Appts[bwoolNum].Resv {
+	for num, rsvp := range bools.Appts[bwoolNum].Resv {
 		if rsvp.User == m.Author {
-			Bools.Appts[bwoolNum].Resv = boolbox.RemoveRsvp(Bools.Appts[bwoolNum].Resv, Num)
-
-			return "Successfully un-RSVP'd!", nil
+			bools.Appts[bwoolNum].Resv = boolbox.RemoveRsvp(bools.Appts[bwoolNum].Resv, num)
+			return "Successfully un-RSVP'd", nil
 		}
 	}
 
 	rsvp := boolbox.Rsvp{User: m.Author}
 
-	pass = false
-	for pass == false {
-		resp, err := Box.Ask(m, rsvpInq, 1)
+	for {
+		resp, err := box.Ask(m, rsvpInq, 1)
 		if err != nil {
 			return "", err
 		}
 
-		time, err := boolbox.CheckMakeTime(resp)
-		if err == nil {
-			rsvp.Time = time
-			pass = true
+		time, err := boolbox.MakeTime(resp)
+		if err != nil {
+			rsvpInq = "Invalid time! Try 7:30, 20:45, etc..."
+			continue
+		}
+		rsvp.Time = time
 
+		bools.Appts[bwoolNum].Resv = append(bools.Appts[bwoolNum].Resv, rsvp)
+		if err := boolbox.StoreModel(apptsPath, bools); err != nil {
+			logger.Printf("Failed to store appointments: %s\n", err)
 		}
 
-		rsvpInq = "Invalid time! Try 7:30, 20:45, etc..."
+		return "Successfully RSVP'd!", nil
+
 	}
-
-	Bools.Appts[bwoolNum].Resv = append(Bools.Appts[bwoolNum].Resv, rsvp)
-	boolbox.StoreModel(apptsPath, Bools)
-
-	return "Successfully RSVP'd!", nil
 }
 
 func (b *Bot) Editbool(m *gateway.MessageCreateEvent) (string, error) {
-	// cleanup
-	del := Box.Track2Delete(m.ChannelID)
-	defer del()
+	var builder strings.Builder
+	builder.WriteString("Which bool would you like?\n```\n")
+	for num, appointment := range bools.Appts {
+		builder.WriteString(fmt.Sprintf("[%d] %s\n", strconv.Itoa(num), appointment.Name))
+	}
+	builder.WriteString("```")
 
 	var bwoolNum int
-	var rsvpNum int
-	var sectNum int
-	var pass bool
-	var builder strings.Builder
-
-	builder.Write([]byte("Which bool would you like?\n```\n"))
-	for num, appointment := range Bools.Appts {
-		builder.Write([]byte("["))
-		builder.Write([]byte(strconv.Itoa(num)))
-		builder.Write([]byte("] "))
-		builder.Write([]byte(appointment.Name))
-		builder.Write([]byte("\n"))
-	}
-	builder.Write([]byte("```"))
-
-	for pass == false {
-		resp, err := Box.Ask(m, builder.String(), 1)
+	for {
+		resp, err := box.Ask(m, builder.String(), 1)
 		if err != nil {
 			return "", err
 		}
 
-		intResp, err := strconv.Atoi(resp)
-		if err == nil {
-			for num, _ := range Bools.Appts {
-				if num == intResp {
-					bwoolNum = num
-					pass = true
-				}
-			}
-		}
-
-		if pass == false {
-			_, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
-			if err != nil {
-				return "", err
-			}
-		}
-	}
-
-	pass = false
-	for pass == false {
-		resp, err := Box.Ask(m, "Which part of the bool would you like to edit?\n"+apptNumOpts, 1)
+		iResp, err := strconv.Atoi(resp) // purposefully not check error
 		if err != nil {
-			return "", nil
-		}
-
-		sectNum, _ = strconv.Atoi(resp)
-		if sectNum >= 0 && sectNum <= 5 {
-			pass = true
-		}
-
-		if pass == false {
-			_, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
-			if err != nil {
-				return "", err
+			if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
+				logger.Printf("Failed to send message: %s\n", err)
 			}
+
+			continue
+		}
+
+		for num, _ := range bools.Appts {
+			if num == iResp {
+				bwoolNum = num
+				break
+			}
+		}
+
+		if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
+			logger.Printf("Failed to send message: %s\n", err)
 		}
 	}
 
-	if sectNum == 5 {
-		return "Exited.", nil
-	} else if sectNum == 0 {
-		resp, err := Box.Ask(m, "What would you like to change the name to?", 1)
+	var sNum int
+	for {
+		resp, err := box.Ask(m, fmt.Sprintf("Which part of the bool would you like to edit?\n%s\n", apptNumOpts), 1)
 		if err != nil {
 			return "", err
 		}
 
-		Bools.Appts[bwoolNum].Name = resp
+		sNum, err = strconv.Atoi(resp)
+		if err != nil {
+			if _, err := b.Ctx.SendMessage(m.ChannelID, fmt.Sprintf("Ivalid option: %s\n", err), nil); err != nil {
+				logger.Printf("Failed to send message: %s\n", err)
+			}
 
+			continue
+		}
+
+		if sNum < 0 && sNum > 5 {
+			if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
+				logger.Printf("Failed to send message: %s\n", err)
+			}
+
+			continue
+		}
+
+		break
+	}
+
+	if sNum == 5 {
+		return "Exited", nil
+	} else if sNum == 0 {
+		resp, err := box.Ask(m, "What would you like to change the name to?", 1)
+		if err != nil {
+			return "", err
+		}
+
+		bools.Appts[bwoolNum].Name = resp
 		return "Successfully changed bool name!", nil
-	} else if sectNum == 1 {
-		resp, err := Box.Ask(m, "What would you like to change the date to?", 1)
-		if err != nil {
-			return "", err
-		}
+	} else if sNum == 1 {
+		for {
+			resp, err := box.Ask(m, "What would you like to change the date to?", 1)
+			if err != nil {
+				return "", err
+			}
 
-		sResp := strings.Split(resp, "/")
-		if (sResp[0] == "n" || sResp[0] == "N") && (sResp[1] == "a" || sResp[1] == "A") {
-			Bools.Appts[bwoolNum].Date.Ud = true
+			if strings.Contains(strings.ToLower(resp), "n/a") {
+				bools.Appts[bwoolNum].Date.Ud = true
+				return "Successfully changed bool date!", nil
+			}
+
+			date, err := boolbox.MakeDate(resp)
+			if err != nil {
+				if _, err := b.Ctx.SendMessage(m.ChannelID, "Invalid date!", nil); err != nil {
+					logger.Printf("Failed to send message: %s\n", err)
+				}
+
+				continue
+			}
+
+			bools.Appts[bwoolNum].Date = date
 			return "Successfully changed bool date!", nil
 		}
+	} else if sNum == 2 {
+		for {
+			resp, err := box.Ask(m, "What would you like to change the time to?", 1)
+			if err != nil {
+				return "", err
+			}
 
-		date, err := boolbox.CheckMakeDate(resp)
-		if err != nil {
-			return "", err
-		}
+			if strings.Contains(strings.ToLower(resp), "n/a") {
+				bools.Appts[bwoolNum].Time.Ud = true
+				return "Successfully changed bool time!", nil
+			}
 
-		Bools.Appts[bwoolNum].Date = date
+			time, err := boolbox.MakeTime(resp)
+			if err != nil {
+				if _, err := b.Ctx.SendMessage(m.ChannelID, "Invalid time! Try 7:30, 20:45, etc...", nil); err != nil {
+					logger.Printf("Failed to send message: %s\n", err)
+				}
 
-		return "Successfully changed bool date!", nil
-	} else if sectNum == 2 {
-		resp, err := Box.Ask(m, "What would you like to change the time to?", 1)
-		if err != nil {
-			return "", err
-		}
+				continue
+			}
 
-		sResp := strings.Split(resp, "/")
-		if (sResp[0] == "n" || sResp[0] == "N") && (sResp[1] == "a" || sResp[1] == "A") {
-			Bools.Appts[bwoolNum].Date.Ud = true
+			bools.Appts[bwoolNum].Time = &time
 			return "Successfully changed bool time!", nil
 		}
-
-		time, err := boolbox.CheckMakeTime(resp)
+	} else if sNum == 3 {
+		resp, err := box.Ask(m, "What would you like to change the description to?", 4)
 		if err != nil {
 			return "", err
 		}
 
-		Bools.Appts[bwoolNum].Time = time
-		return "Successfully changed bool time!", nil
-	} else if sectNum == 3 {
-		resp, err := Box.Ask(m, "What would you like to change the description to?", 4)
-		if err != nil {
-			return "", err
-		}
-
-		Bools.Appts[bwoolNum].Desc = resp
-
+		bools.Appts[bwoolNum].Desc = resp
 		return "Successfully changed bool description!", nil
 	}
 
-	if len(Bools.Appts[bwoolNum].Resv) < 1 {
-		return "", errors.New("Nobody has rsvp'd, so there are no rsvp's to edit.")
+	if len(bools.Appts[bwoolNum].Resv) < 1 {
+		return "", errors.New("No rsvp's to edit!")
 	}
 
 	builder.Reset()
-	builder.Write([]byte("```\n"))
-	for num, rsvp := range Bools.Appts[bwoolNum].Resv {
-		builder.Write([]byte("["))
-		builder.Write([]byte(strconv.Itoa(num)))
-		builder.Write([]byte("] "))
-		builder.Write([]byte(rsvp.User.Username))
-		builder.Write([]byte("\n"))
+	builder.WriteString("```\n")
+	for num, rsvp := range bools.Appts[bwoolNum].Resv {
+		builder.WriteString(fmt.Sprintf("[%d] %s\n", strconv.Itoa(num), rsvp.User.Username))
 	}
-	builder.Write([]byte("```"))
+	builder.WriteString("```")
 
-	pass = false
-	for pass == false {
-		resp, err := Box.Ask(m, builder.String(), 1)
+	var rsvpNum int
+	for {
+		resp, err := box.Ask(m, builder.String(), 1)
 		if err != nil {
 			return "", err
 		}
 
-		intResp, err := strconv.Atoi(resp)
+		iResp, err := strconv.Atoi(resp)
 		if err != nil {
-			return "", err
+			if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
+				logger.Printf("Failed to send message: %s\n", err)
+			}
+
+			continue
 		}
 
-		for num, _ := range Bools.Appts[bwoolNum].Resv {
-			if num == intResp {
+		for num, _ := range bools.Appts[bwoolNum].Resv {
+			if num == iResp {
 				rsvpNum = num
-				pass = true
+				break
 			}
 		}
 
-		if pass == false {
-			_, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
-			if err != nil {
-				return "", err
-			}
-
-		}
-
-		pass = false
-		for pass == false {
-			resp, err := Box.Ask(m, "What would you like to do to the rsvp?\n"+rsvpNumOpts, 1)
-			if err != nil {
-				return "", err
-			}
-
-			intResp, err := strconv.Atoi(resp)
-			if err != nil {
-				return "", err
-			} else {
-				if intResp >= 0 && intResp <= 2 {
-					pass = true
-				}
-			}
-
-			if pass == false {
-				_, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
-				if err != nil {
-					return "", err
-				}
-			}
-		}
-
-		var passed bool
-		if intResp == 2 {
-			return "Exited", nil
-		} else if intResp == 0 {
-			for passed == false {
-				resp, err := Box.Ask(m, "What would you like the new pickup time be?", 1)
-				if err != nil {
-					return "", err
-				}
-
-				time, err := boolbox.CheckMakeTime(resp)
-				if err != nil {
-					_, err := b.Ctx.SendMessage(m.ChannelID, "Invalid date! Try 7:30, 20:45, etc...", nil)
-					if err != nil {
-						return "", err
-					}
-				}
-
-				return "Successfully changed bool name!", nil
-
-				if passed == true {
-					Bools.Appts[bwoolNum].Resv[rsvpNum].Time = time
-
-					return "Successfully changed rsvp time!", nil
-				}
-			}
-		} else if intResp == 1 {
-			resp, err := Box.Ask(m, "Are you sure you want to delete this rsvp? [y/N]", 1)
-			if err != nil {
-				return "", err
-			}
-
-			if resp == "y" || resp == "Y" {
-				Bools.Appts[bwoolNum].Resv = boolbox.RemoveRsvp(Bools.Appts[bwoolNum].Resv, rsvpNum)
-				if err := boolbox.StoreModel(apptsPath, Bools); err != nil {
-					log.Fatalln(err)
-				}
-
-				return "Successfully deleted rsvp!", nil
-			}
-
-			return "Rsvp not deleted.", nil
+		if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
+			logger.Printf("Failed to send message: %s\n", err)
 		}
 	}
 
-	return "", errors.New("There should be no way you get this error...so good job!")
+	for {
+		resp, err := box.Ask(m, fmt.Sprintf("What would you like to do to the rsvp?\n%s", rsvpNumOpts), 1)
+		if err != nil {
+			return "", err
+		}
+
+		sNum, err = strconv.Atoi(resp)
+		if err != nil {
+			if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
+				logger.Printf("Failed to send message: %s\n", err)
+			}
+
+			continue
+		}
+
+		if sNum >= 0 && sNum <= 2 {
+			break
+		}
+
+		if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
+			logger.Printf("Failed to send message: %s\n", err)
+		}
+	}
+
+	if sNum == 2 {
+		return "Exited", nil
+	} else if sNum == 0 {
+		for {
+			resp, err := box.Ask(m, "What would you like the new pickup time to be?", 1)
+			if err != nil {
+				return "", err
+			}
+
+			time, err := boolbox.MakeTime(resp)
+			if err != nil {
+				if _, err := b.Ctx.SendMessage(m.ChannelID, "Invalid time! Try 7:30, 20:45, etc...", nil); err != nil {
+					logger.Printf("Failed to send message: %s\n", err)
+				}
+
+				continue
+			}
+
+			bools.Appts[bwoolNum].Resv[rsvpNum].Time = time
+			return "Successfully changed rsvp time!", nil
+		}
+	} else if sNum == 1 {
+		resp, err := box.Ask(m, "Are you sure you want to delete this rsvp? [y/N]", 1)
+		if err != nil {
+			return "", err
+		}
+
+		if resp == "y" || resp == "Y" {
+			bools.Appts[bwoolNum].Resv = boolbox.RemoveRsvp(bools.Appts[bwoolNum].Resv, rsvpNum)
+			if err := boolbox.StoreModel(apptsPath, bools); err != nil {
+				logger.Printf("Failed to store appointments: %s\n", err)
+			}
+
+			return "Successfully deleted rsvp!", nil
+		}
+
+		return "Rsvp not deleted", nil
+	}
+
+	return "", fmt.Errorf("There should be no way to get this error...so good job! Let %s know!", AUTHOR)
 }
 
 func (b *Bot) Pickedup(m *gateway.MessageCreateEvent) (string, error) {
-	var bwoolNum int
-	var pass bool
 	var builder strings.Builder
-
-	builder.Write([]byte("Which bool would you like?\n```\n"))
-	for num, appointment := range Bools.Appts {
-		builder.Write([]byte("["))
-		builder.Write([]byte(strconv.Itoa(num)))
-		builder.Write([]byte("] "))
-		builder.Write([]byte(appointment.Name))
-		builder.Write([]byte("\n"))
+	builder.WriteString("Wich bool would you like?\n```\n")
+	for num, appointment := range bools.Appts {
+		builder.WriteString(fmt.Sprintf("[%d] %s\n", strconv.Itoa(num), appointment.Name))
 	}
-	builder.Write([]byte("```"))
+	builder.WriteString("```")
 
-	for pass == false {
-		resp, err := Box.Ask(m, builder.String(), 1)
+	var bwoolNum int
+	for {
+		resp, err := box.Ask(m, builder.String(), 1)
 		if err != nil {
 			return "", err
 		}
 
-		intResp, _ := strconv.Atoi(resp)
-		for num, _ := range Bools.Appts {
-			if num == intResp {
+		iResp, err := strconv.Atoi(resp)
+		if err != nil {
+			if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
+				logger.Printf("Failed to send message: %s\n", err)
+			}
+
+			continue
+		}
+
+		for num, _ := range bools.Appts {
+			if num == iResp {
 				bwoolNum = num
-				pass = true
+				break
 			}
 		}
 
-		if pass == false {
-			_, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil)
-			if err != nil {
-				return "", err
-			}
+		if _, err := b.Ctx.SendMessage(m.ChannelID, "Choice out of range!, try again...\n", nil); err != nil {
+			logger.Printf("Failed to send message: %s\n", err)
 		}
-
 	}
 
-	pass = false
+	var pass bool
 	var rsvpNum int
-	for num, rsvp := range Bools.Appts[bwoolNum].Resv {
+	for num, rsvp := range bools.Appts[bwoolNum].Resv {
 		if rsvp.User == m.Author {
 			rsvpNum = num
-			pass = true
+			pass = !pass
 		}
 	}
 
-	if pass == false {
-		return "", errors.New("Error! You have not rsvp'd!")
-	}
-
-	Bools.Appts[bwoolNum].Resv[rsvpNum].Pickedup = true
-	return "Marked as picked up.", nil
+	bools.Appts[bwoolNum].Resv[rsvpNum].Pickedup = true
+	return "marked as picked up", nil
 }
 
 func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
-	// cleanup
-	del := Box.Track2Delete(m.ChannelID)
-	defer del()
-
-	if len(Bools.Appts) == 0 {
-		return nil, errors.New("No bools currently active. Use `" + Prefix + "newbool` to add a new scheduled bool")
+	if len(bools.Appts) == 0 {
+		return nil, fmt.Errorf("No bools currently active. use `%snewbool` to ass a new scheduled bool", *prefix)
 	}
 
 	var builder strings.Builder
-
-	builder.Write([]byte("```\n"))
-	for num, appointment := range Bools.Appts {
-		builder.Write([]byte("["))
-		builder.Write([]byte(strconv.Itoa(num)))
-		builder.Write([]byte("] "))
-		builder.Write([]byte(appointment.Name))
-		builder.Write([]byte("\n"))
+	builder.WriteString("```\n")
+	for num, appointment := range bools.Appts {
+		builder.WriteString(fmt.Sprintf("[%d] %s\n", strconv.Itoa(num), appointment.Name))
 	}
-	builder.Write([]byte("```"))
+	builder.WriteString("```")
 
-	resp, err := Box.Ask(m, builder.String(), 1)
+	resp, err := box.Ask(m, builder.String(), 1)
 	if err != nil {
 		return nil, err
 	}
 
 	fields := []discord.EmbedField{}
 
-	intResp, err := strconv.Atoi(resp)
+	iResp, err := strconv.Atoi(resp)
 	if err == nil {
-		for num, bwool := range Bools.Appts {
-			if num == intResp {
+		for num, bwool := range bools.Appts {
+			if num == iResp {
 				if len(bwool.Resv) > 0 {
 					for _, rsvp := range bwool.Resv {
 						field := discord.EmbedField{
@@ -591,20 +543,18 @@ func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 						if rsvp.Pickedup == true {
 							field.Value = "*Picked Up*"
 						} else {
-							field.Value = "Pickup time: " + boolbox.BuildTime(&boolbox.Time{Time: rsvp.Time.Time})
+							field.Value = fmt.Sprintf("Pickup time: %s", boolbox.BuildTime(&boolbox.Time{Time: rsvp.Time.Time}))
 						}
 
 						fields = append(fields, field)
 					}
-				}
 
-				embed := discord.Embed{
-					Title:       bwool.Name,
-					Description: boolbox.BuildApptDesc(bwool),
-					Fields:      fields,
+					return &discord.Embed{
+						Title:       bwool.Name,
+						Description: boolbox.BuildApptDesc(bwool),
+						Fields:      fields,
+					}, nil
 				}
-
-				return &embed, nil
 			}
 		}
 	}
@@ -613,25 +563,23 @@ func (b *Bot) Bool(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
 }
 
 func (b *Bot) Bools(m *gateway.MessageCreateEvent) (*discord.Embed, error) {
-	if len(Bools.Appts) == 0 {
-		return nil, errors.New("No bools currently active. Use `" + Prefix + "newbool` to add a new scheduled bool")
+	if len(bools.Appts) == 0 {
+		return nil, fmt.Errorf("No bools currently active. use `%snewbool` to ass a new scheduled bool", *prefix)
 	}
 
 	fields := []discord.EmbedField{}
 
-	for _, Bool := range Bools.Appts {
+	for _, bwool := range bools.Appts {
 		field := discord.EmbedField{
-			Name:   "`" + Bool.Name + "`",
-			Value:  Bool.Desc,
+			Name:   fmt.Sprintf("`%s`", bwool.Name),
+			Value:  bwool.Desc,
 			Inline: false,
 		}
 		fields = append(fields, field)
 	}
 
-	embed := discord.Embed{
+	return &discord.Embed{
 		Title:  "Current Bools",
 		Fields: fields,
-	}
-
-	return &embed, nil
+	}, nil
 }
