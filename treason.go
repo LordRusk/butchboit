@@ -33,7 +33,7 @@ func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
 
 	vst, err := b.Ctx.VoiceState(m.GuildID, m.Author.ID)
 	if err != nil {
-		logger.Printf("Failed to get voice state of %s: %s\n", m.Author, err)
+		logger.Printf("Failed to get voice state of %v: %s\n", m.Author, err)
 		return "", fmt.Errorf("Cannot join channel! %s not in channel", m.Author.Username)
 	}
 
@@ -74,23 +74,21 @@ func (b *Bot) Treason(m *gateway.MessageCreateEvent) (string, error) {
 			cmd.Stdout = oggWriter
 			cmd.Stderr = os.Stderr
 
-			_, err = b.Ctx.SendMessage(m.ChannelID, "Playing `"+media.Title+"`", nil)
-			if err != nil {
-				log.Println(err)
+			if _, err = b.Ctx.SendMessage(m.ChannelID, fmt.Sprintf("Playing `%s`", media.Title), nil); err != nil {
+				logger.Printf("Failed to send message: %s\n", err)
 			}
 
 			// start speaking
 			if err := box.BoomBoxes[m.GuildID].Speaking(voicegateway.Microphone); err != nil {
-				log.Println("failed to send speaking:", err)
+				logger.Printf("treason: failed to start speaking: %s\n", err)
 			}
 
 			if err := cmd.Run(); err != nil {
-				log.Println(err)
+				logger.Printf("treason: Failed to run cmd: %s\n", err)
 			}
 
-			_, err = b.Ctx.SendMessage(m.ChannelID, "Finished playing `"+media.Title+"`", nil)
-			if err != nil {
-				log.Println(err)
+			if _, err = b.Ctx.SendMessage(m.ChannelID, fmt.Sprintf("Finished playing `%s`", media.Title), nil); err != nil {
+				logger.Printf("Failed to send message: %s\n")
 			}
 
 			if box.BoomBoxes[m.GuildID] != nil {
@@ -137,9 +135,9 @@ func (b *Bot) Play(m *gateway.MessageCreateEvent, input bot.RawArguments) error 
 	if boolbox.IsLink(string(input)) {
 		id = string(input)
 	} else {
-		_, err := b.Ctx.SendMessage(m.ChannelID, "Searching `"+string(input)+"`", nil)
+		_, err := b.Ctx.SendMessage(m.ChannelID, fmt.Sprintf("Searching `%s`", input), nil)
 		if err != nil {
-			return err
+			logger.Printf("Failed to send message: %s\n", err)
 		}
 
 		id, err = boolbox.GetVidID(string(input))
@@ -158,9 +156,8 @@ func (b *Bot) Play(m *gateway.MessageCreateEvent, input bot.RawArguments) error 
 	if len(box.BoomBoxes[m.GuildID].Player) != 0 {
 		box.BoomBoxes[m.GuildID].Queue = append(box.BoomBoxes[m.GuildID].Queue, media.Title)
 
-		_, err := b.Ctx.SendMessage(m.ChannelID, "`"+media.Title+"` Added to queue", nil)
-		if err != nil {
-			return err
+		if _, err := b.Ctx.SendMessage(m.ChannelID, fmt.Sprintf("`%s` Added to queue", media.Title), nil); err != nil {
+			logger.Printf("Failed to send message: %s\n", err)
 		}
 	}
 
@@ -191,7 +188,7 @@ func (b *Bot) Queue(m *gateway.MessageCreateEvent) (string, error) {
 
 	var builder strings.Builder
 	for num, title := range box.BoomBoxes[m.GuildID].Queue {
-		builder.WriteString(strconv.Itoa(num+1) + ": `" + title + "`\n")
+		builder.WriteString(fmt.Sprintf("%d: `%s`\n", strconv.Itoa(num+1), title))
 	}
 
 	return builder.String(), nil
